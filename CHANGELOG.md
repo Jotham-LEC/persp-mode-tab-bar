@@ -6,6 +6,14 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-09-24
+
+### Fixed
+- **The package would not byte-compile against persp-mode 4.0.** `get-current-persp`
+  and `safe-persp-name` became obsolete aliases in that release, which is a warning and
+  one day a removal. The current perspective is read through whichever name the
+  persp-mode in front of it has, so both sides of 4.0 work, and neither warns.
+
 ## [0.1.0] — 2026-09-24
 
 First release, extracted from the author's Doom Emacs configuration where it had been
@@ -24,5 +32,6 @@ in daily use.
 - **Faces `persp-mode-tab-bar-current` and `persp-mode-tab-bar-inactive`**, composed
   from stock faces so the tab bar's own faces are never restyled.
 
-[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.1.0

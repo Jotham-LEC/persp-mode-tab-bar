@@ -4,7 +4,7 @@
 
 ;; Author: Jotham Lim Ee Chen <jotham@cothink.ing>
 ;; URL: https://github.com/Jotham-LEC/persp-mode-tab-bar
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "29.1") (persp-mode "2.9.8"))
 ;; Keywords: convenience, frames
 
@@ -121,9 +121,20 @@ Nil while the mode is off, so that disabling it twice cannot restore a
     (cl-remove persp-nil-name (persp-names-current-frame-fast-ordered)
                :count 1 :test #'equal)))
 
+(defalias 'persp-mode-tab-bar--get-current
+  ;; persp-mode 4.0.0 renamed this and left the old name as an obsolete alias.
+  ;; Resolving it once at load time keeps the package quiet, and working, on
+  ;; either side of that release.
+  (if (fboundp 'persp-get-current) 'persp-get-current 'get-current-persp)
+  "Return the current perspective, or nil for the nil perspective.")
+
 (defun persp-mode-tab-bar--current-name ()
   "Return the name of the current workspace."
-  (safe-persp-name (get-current-persp)))
+  ;; What `safe-persp-name' did, written out: 4.0.0 retired it in favour of a
+  ;; `persp-name' that takes the nil perspective, and before that `persp-name'
+  ;; is the bare struct accessor and cannot.
+  (let ((persp (persp-mode-tab-bar--get-current)))
+    (if persp (persp-name persp) persp-nil-name)))
 
 (defun persp-mode-tab-bar--switch (name)
   "Switch to the workspace called NAME."

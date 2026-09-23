@@ -113,7 +113,7 @@ Nil while the mode is off, so that disabling it twice cannot restore a
     (backend backend)))
 
 (defun persp-mode-tab-bar--names ()
-  "Return the workspace names, in the order `persp-mode' holds them."
+  "Return the workspace names, in `persp-mode' order."
   (if (eq (persp-mode-tab-bar--backend) 'doom)
       (+workspace-list-names)
     ;; The nil perspective is every frame's fallback rather than a workspace
@@ -145,7 +145,7 @@ Nil while the mode is off, so that disabling it twice cannot restore a
 
 ;;;###autoload
 (defun persp-mode-tab-bar-format ()
-  "Return one tab-bar item per workspace; clicking one switches to it."
+  "Return one tab-bar item per workspace; click one to switch to it."
   (when (bound-and-true-p persp-mode)
     (let ((current (persp-mode-tab-bar--current-name))
           (index 0))

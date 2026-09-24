@@ -3,13 +3,10 @@
 [![CI](https://github.com/Jotham-LEC/persp-mode-tab-bar/actions/workflows/ci.yml/badge.svg)](https://github.com/Jotham-LEC/persp-mode-tab-bar/actions/workflows/ci.yml)
 [![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](https://github.com/Jotham-LEC/persp-mode-tab-bar/blob/main/LICENSE)
 
-> Your [persp-mode](https://github.com/Bad-ptr/persp-mode.el) workspaces, drawn in
-> Emacs's own tab bar: numbered, the current one picked out, clickable. Works with
-> Doom Emacs's `+workspace` commands and with plain persp-mode.
+> Basically a tab bar for [persp-mode](https://github.com/Bad-ptr/persp-mode.el) workspaces
+> Works with Doom Emacs's `+workspace` commands and with plain persp-mode.
 
-persp-mode tells you which workspace you are in by echoing the list when you switch,
-and a message is gone a moment later. Emacs already has a strip across the top of the
-frame for exactly this question, so put the answer there and leave it there.
+In original persp-mode, it tells you which workspace you are in by echoing the list when you switch, and a message disappears a moment later. But what if...I want to see it perpetually? Built for emacs users who prefer using buffers over tabs, but still want some high-level organisation. (Tmux session equivalent?)
 
 ![Switching workspaces: the tab bar follows](images/demo.gif)
 
@@ -45,40 +42,16 @@ Emacs 29.1 or newer, and persp-mode.
 (persp-mode-tab-bar-mode 1)
 ```
 
-That is the whole interface. Hanging it off `persp-mode-hook`, as the `use-package`
-block above does, is the usual arrangement: the bar appears with the workspaces and
-goes away with them.
-
-In Doom, where `:ui workspaces` gives you persp-mode already, the mode detects the
-`+workspace` commands and uses them, so the numbering and the order match what
-`SPC TAB .` shows you. It also silences Doom's echoed workspace list, since the bar is
-now saying the same thing permanently and does not stop saying it; set
-`persp-mode-tab-bar-silence-doom-echo` to `nil` if you want both. Doom's `:ui tabs` is
-centaur-tabs, which tabs buffers — the two do not overlap.
-
-On plain persp-mode the list includes the nil perspective — `none`, where persp-mode
-starts you and where killing your last workspace puts you back. It is a real place, so
-it gets a real item you can click. Doom's own workspace list leaves it out, and so does
-this, because Doom never leaves you there.
+In Doom, where `:ui workspaces` gives you persp-mode already, the mode detects the `+workspace` commands and uses them, so the numbering and the order match what `SPC TAB .` displays. It also silences Doom's echoed workspace list, since the bar is now saying the same thing permanently. Set `persp-mode-tab-bar-silence-doom-echo` to `nil` if you want both. Doom's `:ui tabs` is centaur-tabs, which tabs buffers — the two do not overlap.
 
 ## Customising
 
-Two faces draw the list, and the mode restyles nothing else: a theme's `tab-bar-tab`
-colours are left exactly as the theme set them.
+| Face                          | Default                           | Draws                    |
+| ----------------------------- | --------------------------------- | ------------------------ |
+| `persp-mode-tab-bar-current`  | `bold` + `highlight`              | the workspace you are in |
+| `persp-mode-tab-bar-inactive` | `shadow` + `tab-bar-tab-inactive` | every other workspace    |
 
-| Face | Default | Draws |
-| --- | --- | --- |
-| `persp-mode-tab-bar-current` | `bold` + `highlight` | the workspace you are in |
-| `persp-mode-tab-bar-inactive` | `shadow` + `tab-bar-tab-inactive` | every other workspace |
-
-Both defaults are compositions of stock faces, so the list follows whatever theme you
-load without knowing anything about it: the current workspace takes the theme's
-highlight, the others its dimmed text over the tab bar's own inactive background. They
-compose at the point of use rather than through `:inherit`, which a theme can
-overwrite.
-
-To take them over, set them the way you set any other face — `custom-set-faces`, or
-`:custom-face` in a `use-package` block, or `M-x customize-face`:
+Both defaults are compositions of stock faces, so the list follows whatever theme you load. To override, set them the way you set any other face — `custom-set-faces`, or `:custom-face` in a `use-package` block, or `M-x customize-face`:
 
 ```elisp
 (custom-set-faces
@@ -92,38 +65,17 @@ To take them over, set them the way you set any other face — `custom-set-faces
 
 ![A restyled workspace list](images/customised.png)
 
-The spacing around a name is the tab bar's, not this package's: `tab-bar-separator`
-sets what goes between the items, and on a GUI frame a `:box` on either face pads and
-outlines them. A terminal draws no boxes, so the shot above widens the gap instead.
+The spacing around a name is the tab bar's, not this package's: `tab-bar-separator` sets what goes between the items, and on a GUI frame a `:box` on either face pads and outlines them.
 
-Widths are the tab bar's business too. `tab-bar-auto-width` shrinks items by face, and
-these two faces are not in `tab-bar-auto-width-faces` (`:inherit` does not count), so a
-workspace keeps the width of its name; add them to that list to have long names shrink
-to fit.
-
-Three variables, all optional:
-
-| Variable | Default | Does |
-| --- | --- | --- |
-| `persp-mode-tab-bar-backend` | `auto` | pins the workspace API — `doom` or `persp-mode` — instead of detecting it |
-| `persp-mode-tab-bar-replace` | the two tab-drawing items | which `tab-bar-format` items the workspace list stands in for |
-| `persp-mode-tab-bar-silence-doom-echo` | `t` | drops Doom's echoed workspace list, which the bar is now showing permanently |
-
-Where the list sits is `tab-bar-format`'s business: the workspace list lands where the
-real tabs were, so move `tab-bar-format-tabs` in your own format and the list moves
-with it.
+| Variable                               | Default                   | Does                                                                         |
+| -------------------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| `persp-mode-tab-bar-backend`           | `auto`                    | pins the workspace API — `doom` or `persp-mode` — instead of detecting it    |
+| `persp-mode-tab-bar-replace`           | the two tab-drawing items | which `tab-bar-format` items the workspace list stands in for                |
+| `persp-mode-tab-bar-silence-doom-echo` | `t`                       | drops Doom's echoed workspace list, which the bar is now showing permanently |
 
 ## Compatibility
 
-The mode contributes one `tab-bar-format` item rather than taking the bar. It splices
-the workspace list in where the real tabs were and leaves every other item where it
-found it, so history buttons, `tab-bar-format-global` and packages like
-[tab-bar-echo-area](https://github.com/fritzgrabo/tab-bar-echo-area) or
-[tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) go on working; turning the
-mode off puts the format back, and `tab-bar-show` with it. Its own two faces leave
-themes and [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) alone, and its
-`workspace-N` item keys collide with none of Emacs's. Real tab-bar tabs, Doom's
-per-workspace tab sets included, keep working — they are simply not drawn.
+The mode contributes one `tab-bar-format` item rather than taking the bar. It splices the workspace list in where the real tabs were and leaves every other item where it found it, so history buttons, `tab-bar-format-global` and packages like [tab-bar-echo-area](https://github.com/fritzgrabo/tab-bar-echo-area) or [tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) go on working; turning the mode off puts the format back, and `tab-bar-show` with it. Its own two faces leave themes and [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) alone, and its `workspace-N` item keys collide with none of Emacs's. Real tab-bar tabs, Doom's per-workspace tab sets included, keep working — they are simply not drawn.
 
 ## Contributing
 

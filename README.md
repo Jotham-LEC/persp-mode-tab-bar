@@ -11,6 +11,8 @@ persp-mode tells you which workspace you are in by echoing the list when you swi
 and a message is gone a moment later. Emacs already has a strip across the top of the
 frame for exactly this question, so put the answer there and leave it there.
 
+![Switching workspaces: the tab bar follows](images/demo.gif)
+
 ## Install
 
 Not on MELPA yet. With `use-package` and Emacs 30's `:vc`:

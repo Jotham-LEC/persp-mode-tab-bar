@@ -6,6 +6,10 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+### Added
+- **A demo of the bar in the README.** An animated shot of the workspace list
+  following a walk through four sample workspaces.
+
 ## [0.2.0] — 2026-09-24
 
 A round of adversarial testing, most of it aimed at the plain persp-mode path that

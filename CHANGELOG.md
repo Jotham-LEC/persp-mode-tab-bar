@@ -14,6 +14,11 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
   restyled bar; the three variables; and the `tab-bar-auto-width` note, moved here from
   `Sharing the tab bar`.
 
+### Changed
+- **`Sharing the tab bar` is now a paragraph called `Compatibility`.** It took three
+  paragraphs to say what fits in one: the mode contributes a format item and leaves the
+  rest of the tab bar where it found it.
+
 ## [0.2.0] — 2026-09-24
 
 A round of adversarial testing, most of it aimed at the plain persp-mode path that

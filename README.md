@@ -113,26 +113,17 @@ Where the list sits is `tab-bar-format`'s business: the workspace list lands whe
 real tabs were, so move `tab-bar-format-tabs` in your own format and the list moves
 with it.
 
-## Sharing the tab bar
+## Compatibility
 
-The tab bar is shared ground, so the mode takes only the space it needs.
-
-It does not assign `tab-bar-format`. It splices itself in where the real tabs were —
-`tab-bar-format-tabs` or `tab-bar-format-tabs-groups`, which would otherwise draw a
-second row of tabs beside the workspace list — and leaves every other item exactly
-where it found it. History buttons, separators, `tab-bar-format-global`, the items
+The mode contributes one `tab-bar-format` item rather than taking the bar. It splices
+the workspace list in where the real tabs were and leaves every other item where it
+found it, so history buttons, `tab-bar-format-global` and packages like
 [tab-bar-echo-area](https://github.com/fritzgrabo/tab-bar-echo-area) or
-[tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) add: all still there, still
-in order. Turning the mode off restores the list you had, and `tab-bar-show` with it.
-
-It defines two faces of its own and restyles nothing, so a theme's `tab-bar-tab` colours
-and packages like [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) are
-untouched. Its item keys are `workspace-N`, which collide with none of Emacs's own
-`tab-N`, `group-N` or `current-tab`.
-
-Real tab-bar tabs keep working. They are simply not drawn, which means Doom's
-per-workspace tab sets survive untouched: this package contributes a format item, not a
-tab.
+[tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) go on working; turning the
+mode off puts the format back, and `tab-bar-show` with it. Its own two faces leave
+themes and [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) alone, and its
+`workspace-N` item keys collide with none of Emacs's. Real tab-bar tabs, Doom's
+per-workspace tab sets included, keep working — they are simply not drawn.
 
 ## Contributing
 

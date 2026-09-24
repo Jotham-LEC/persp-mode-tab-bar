@@ -138,6 +138,14 @@
                          (memq #'persp-mode-tab-bar--redraw (symbol-value hook)))
                        persp-mode-tab-bar--redraw-hooks))))
 
+(ert-deftest persp-mode-tab-bar-enabling-twice-splices-once ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode 1)
+    (persp-mode-tab-bar-mode 1)
+    (should (equal tab-bar-format
+                   '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill)))))
+
 (ert-deftest persp-mode-tab-bar-disabling-twice-restores-once ()
   (persp-mode-tab-bar-test--with-tab-bar
     (persp-mode-tab-bar-mode 1)
@@ -164,6 +172,80 @@
   (let ((formatted (persp-mode-tab-bar--message-body "Renamed '#1'->'docs'" 'success)))
     (should (equal (substring-no-properties formatted) "Renamed '#1'->'docs'"))
     (should (eq (get-text-property 0 'face formatted) 'success))))
+
+
+;;; Against a real persp-mode
+
+(defmacro persp-mode-tab-bar-test--with-persp-mode (&rest body)
+  "Run BODY with persp-mode on, in a throwaway state directory."
+  (declare (indent 0))
+  `(let ((persp-auto-resume-time -1)
+         (persp-auto-save-opt 0)
+         (persp-save-dir (make-temp-file "persp-mode-tab-bar-test" t))
+         (persp-mode-tab-bar-backend 'persp-mode))
+     (unwind-protect
+         (progn (persp-mode 1) ,@body)
+       (persp-mode -1)
+       (delete-directory persp-save-dir t))))
+
+(ert-deftest persp-mode-tab-bar-lists-the-nil-perspective ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    ;; Where plain persp-mode starts you, and so the whole bar at that point.
+    (should (equal (persp-mode-tab-bar--names) (list persp-nil-name)))
+    (let ((items (persp-mode-tab-bar-format)))
+      (should (= (length items) 1))
+      (should (eq (get-text-property 0 'face (nth 2 (car items)))
+                  'persp-mode-tab-bar-current)))))
+
+(ert-deftest persp-mode-tab-bar-marks-the-current-workspace-for-real ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    (persp-add-new "work")
+    (persp-frame-switch "work")
+    (should (equal (persp-mode-tab-bar--current-name) "work"))
+    (should (member "work" (persp-mode-tab-bar--names)))))
+
+(ert-deftest persp-mode-tab-bar-switching-to-a-vanished-workspace-creates-nothing ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    (persp-add-new "work")
+    (let ((before (persp-mode-tab-bar--names))
+          (current (persp-mode-tab-bar--current-name)))
+      (persp-mode-tab-bar--switch "no-such-workspace")
+      (should (equal (persp-mode-tab-bar--names) before))
+      (should (equal (persp-mode-tab-bar--current-name) current)))))
+
+(ert-deftest persp-mode-tab-bar-switching-to-a-vanished-doom-workspace-is-quiet ()
+  ;; Doom's own `+workspace-switch' signals on a name it does not have.
+  (let ((persp-mode-tab-bar-backend 'doom)
+        (called nil))
+    (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("#1")))
+              ((symbol-function '+workspace-switch)
+               (lambda (name)
+                 (unless (member name '("#1"))
+                   (error "%s is not an available workspace" name))
+                 (setq called name))))
+      (should-not (persp-mode-tab-bar--switch "gone"))
+      (should (null called))
+      (persp-mode-tab-bar--switch "#1")
+      (should (equal called "#1")))))
+
+(ert-deftest persp-mode-tab-bar-can-switch-back-to-the-nil-perspective ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    (persp-add-new "work")
+    (persp-mode-tab-bar--switch "work")
+    (should (equal (persp-mode-tab-bar--current-name) "work"))
+    (persp-mode-tab-bar--switch persp-nil-name)
+    (should (equal (persp-mode-tab-bar--current-name) persp-nil-name))))
+
+(ert-deftest persp-mode-tab-bar-clicking-an-item-switches-for-real ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    (persp-add-new "work")
+    (persp-add-new "docs")
+    (let ((item (seq-find (lambda (i)
+                            (equal (substring-no-properties (nth 2 i)) " 3 docs "))
+                          (persp-mode-tab-bar-format))))
+      (should item)
+      (funcall (nth 3 item))
+      (should (equal (persp-mode-tab-bar--current-name) "docs")))))
 
 (provide 'persp-mode-tab-bar-test)
 ;;; persp-mode-tab-bar-test.el ends here

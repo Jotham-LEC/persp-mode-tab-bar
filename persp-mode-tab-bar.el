@@ -4,7 +4,7 @@
 
 ;; Author: Jotham Lim Ee Chen <jotham@cothink.ing>
 ;; URL: https://github.com/Jotham-LEC/persp-mode-tab-bar
-;; Version: 0.1.1
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "29.1") (persp-mode "2.9.8"))
 ;; Keywords: convenience, frames
 
@@ -47,7 +47,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'tab-bar)
 (require 'persp-mode)
 
@@ -116,10 +115,12 @@ Nil while the mode is off, so that disabling it twice cannot restore a
   "Return the workspace names, in `persp-mode' order."
   (if (eq (persp-mode-tab-bar--backend) 'doom)
       (+workspace-list-names)
-    ;; The nil perspective is every frame's fallback rather than a workspace
-    ;; anyone switches to, and Doom's own list drops it too.
-    (cl-remove persp-nil-name (persp-names-current-frame-fast-ordered)
-               :count 1 :test #'equal)))
+    ;; Including the nil perspective, which is where plain persp-mode starts
+    ;; you and where killing your last workspace puts you back.  Drop it and
+    ;; the bar is empty until you make a workspace, nothing is marked current
+    ;; while you are in it, and there is no item to click to get back.  Doom's
+    ;; own list leaves it out because Doom never leaves you there.
+    (persp-names-current-frame-fast-ordered)))
 
 (defalias 'persp-mode-tab-bar--get-current
   ;; persp-mode 4.0.0 renamed this and left the old name as an obsolete alias.
@@ -138,9 +139,15 @@ Nil while the mode is off, so that disabling it twice cannot restore a
 
 (defun persp-mode-tab-bar--switch (name)
   "Switch to the workspace called NAME."
-  (if (eq (persp-mode-tab-bar--backend) 'doom)
-      (+workspace-switch name)
-    (when (persp-get-by-name name)
+  ;; An item can outlive the workspace it names by a redisplay, and neither
+  ;; backend takes a stale name well on its own: `+workspace-switch' signals,
+  ;; and `persp-frame-switch' is worse, because `persp-get-by-name' answers
+  ;; `persp-not-persp' rather than nil for a name that is gone, so the obvious
+  ;; guard is no guard and the workspace gets created.  Clicking a workspace
+  ;; that has been killed should simply do nothing.
+  (when (member name (persp-mode-tab-bar--names))
+    (if (eq (persp-mode-tab-bar--backend) 'doom)
+        (+workspace-switch name)
       (persp-frame-switch name))))
 
 ;;;###autoload
@@ -152,9 +159,11 @@ Nil while the mode is off, so that disabling it twice cannot restore a
       (mapcar
        (lambda (name)
          (setq index (1+ index))
-         ;; `tab-bar-auto-width' shrinks the items keyed `tab-N', `current-tab'
-         ;; and `group-N'.  A `workspace-N' key is outside that set, so a
-         ;; workspace keeps the width of its own name.
+         ;; `tab-bar-auto-width' picks what to shrink by face, not by key: an
+         ;; item is resizable when its own face is in
+         ;; `tab-bar-auto-width-faces', which these are not, `:inherit'
+         ;; included.  So a workspace keeps the width of its name unless you
+         ;; add these faces to that list yourself.
          `(,(intern (format "workspace-%d" index))
            menu-item
            ,(propertize (format " %d %s " index name)
@@ -208,25 +217,33 @@ with only their prefix gone."
 
 (defun persp-mode-tab-bar--silence-doom (silence)
   "Advise Doom's workspace echo away when SILENCE, and restore it otherwise."
-  (when (fboundp '+workspace--message-body)
-    (if silence
-        (progn
+  (if silence
+      (progn
+        ;; Advising an unbound symbol would define it, so ask after each one
+        ;; rather than taking Doom's presence as a whole.
+        (when (fboundp '+workspace--message-body)
           (advice-add '+workspace--message-body :override
-                      #'persp-mode-tab-bar--message-body)
-          (advice-add '+workspace/display :override #'ignore))
-      (advice-remove '+workspace--message-body #'persp-mode-tab-bar--message-body)
-      (advice-remove '+workspace/display #'ignore))))
+                      #'persp-mode-tab-bar--message-body))
+        (when (fboundp '+workspace/display)
+          (advice-add '+workspace/display :override #'ignore)))
+    (advice-remove '+workspace--message-body #'persp-mode-tab-bar--message-body)
+    (advice-remove '+workspace/display #'ignore)))
 
 (defun persp-mode-tab-bar--enable ()
   "Put the workspace list in the tab bar and show the bar."
+  ;; `define-minor-mode' runs this whenever the mode is turned on, the times it
+  ;; was already on included -- a config that both calls the mode and hangs it
+  ;; off `persp-mode-hook' does exactly that -- and splicing twice would list
+  ;; every workspace twice.  The hooks and the advice below are each idempotent
+  ;; already.
   (unless persp-mode-tab-bar--saved-state
     (setq persp-mode-tab-bar--saved-state
-          (list tab-bar-format tab-bar-show (not (bound-and-true-p tab-bar-mode)))))
-  (setq tab-bar-format (persp-mode-tab-bar--splice tab-bar-format))
-  ;; A number here hides the bar until that many real tabs exist, and a
-  ;; workspace is not a tab, so it would hide a bar with everything to show.
-  (when (natnump tab-bar-show)
-    (setq tab-bar-show t))
+          (list tab-bar-format tab-bar-show (not (bound-and-true-p tab-bar-mode))))
+    (setq tab-bar-format (persp-mode-tab-bar--splice tab-bar-format))
+    ;; A number here hides the bar until that many real tabs exist, and a
+    ;; workspace is not a tab, so it would hide a bar with everything to show.
+    (when (natnump tab-bar-show)
+      (setq tab-bar-show t)))
   (dolist (hook persp-mode-tab-bar--redraw-hooks)
     (add-hook hook #'persp-mode-tab-bar--redraw))
   (when (and persp-mode-tab-bar-silence-doom-echo

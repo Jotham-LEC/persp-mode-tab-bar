@@ -54,6 +54,11 @@ now saying the same thing permanently and does not stop saying it; set
 `persp-mode-tab-bar-silence-doom-echo` to `nil` if you want both. Doom's `:ui tabs` is
 centaur-tabs, which tabs buffers — the two do not overlap.
 
+On plain persp-mode the list includes the nil perspective — `none`, where persp-mode
+starts you and where killing your last workspace puts you back. It is a real place, so
+it gets a real item you can click. Doom's own workspace list leaves it out, and so does
+this, because Doom never leaves you there.
+
 Four settings, all optional: `persp-mode-tab-bar-backend` pins the workspace API
 instead of detecting it, `persp-mode-tab-bar-replace` says which `tab-bar-format` items
 the workspace list stands in for, and the faces `persp-mode-tab-bar-current` and
@@ -74,8 +79,10 @@ in order. Turning the mode off restores the list you had, and `tab-bar-show` wit
 It defines two faces of its own and restyles nothing, so a theme's `tab-bar-tab` colours
 and packages like [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) are
 untouched. Its item keys are `workspace-N`, which collide with none of Emacs's own
-`tab-N`, `group-N` or `current-tab` — and, usefully, fall outside what
-`tab-bar-auto-width` shrinks, so a workspace keeps the width of its name.
+`tab-N`, `group-N` or `current-tab`. `tab-bar-auto-width` picks what to shrink by
+face rather than by key, and these faces are not in `tab-bar-auto-width-faces`
+(`:inherit` does not count), so a workspace keeps the width of its name. Add them to
+that list if you would rather it shrank them to fit.
 
 Real tab-bar tabs keep working. They are simply not drawn, which means Doom's
 per-workspace tab sets survive untouched: this package contributes a format item, not a

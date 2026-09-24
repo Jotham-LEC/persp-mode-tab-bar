@@ -61,10 +61,57 @@ starts you and where killing your last workspace puts you back. It is a real pla
 it gets a real item you can click. Doom's own workspace list leaves it out, and so does
 this, because Doom never leaves you there.
 
-Four settings, all optional: `persp-mode-tab-bar-backend` pins the workspace API
-instead of detecting it, `persp-mode-tab-bar-replace` says which `tab-bar-format` items
-the workspace list stands in for, and the faces `persp-mode-tab-bar-current` and
-`persp-mode-tab-bar-inactive` say how it looks.
+## Customising
+
+Two faces draw the list, and the mode restyles nothing else: a theme's `tab-bar-tab`
+colours are left exactly as the theme set them.
+
+| Face | Default | Draws |
+| --- | --- | --- |
+| `persp-mode-tab-bar-current` | `bold` + `highlight` | the workspace you are in |
+| `persp-mode-tab-bar-inactive` | `shadow` + `tab-bar-tab-inactive` | every other workspace |
+
+Both defaults are compositions of stock faces, so the list follows whatever theme you
+load without knowing anything about it: the current workspace takes the theme's
+highlight, the others its dimmed text over the tab bar's own inactive background. They
+compose at the point of use rather than through `:inherit`, which a theme can
+overwrite.
+
+To take them over, set them the way you set any other face — `custom-set-faces`, or
+`:custom-face` in a `use-package` block, or `M-x customize-face`:
+
+```elisp
+(custom-set-faces
+ '(persp-mode-tab-bar-current
+   ((t :inherit bold :foreground "#ffffff" :background "#6f5bd5")))
+ '(persp-mode-tab-bar-inactive
+   ((t :foreground "#8f8f9d"))))
+
+(setq tab-bar-separator "  ")
+```
+
+![A restyled workspace list](images/customised.png)
+
+The spacing around a name is the tab bar's, not this package's: `tab-bar-separator`
+sets what goes between the items, and on a GUI frame a `:box` on either face pads and
+outlines them. A terminal draws no boxes, so the shot above widens the gap instead.
+
+Widths are the tab bar's business too. `tab-bar-auto-width` shrinks items by face, and
+these two faces are not in `tab-bar-auto-width-faces` (`:inherit` does not count), so a
+workspace keeps the width of its name; add them to that list to have long names shrink
+to fit.
+
+Three variables, all optional:
+
+| Variable | Default | Does |
+| --- | --- | --- |
+| `persp-mode-tab-bar-backend` | `auto` | pins the workspace API — `doom` or `persp-mode` — instead of detecting it |
+| `persp-mode-tab-bar-replace` | the two tab-drawing items | which `tab-bar-format` items the workspace list stands in for |
+| `persp-mode-tab-bar-silence-doom-echo` | `t` | drops Doom's echoed workspace list, which the bar is now showing permanently |
+
+Where the list sits is `tab-bar-format`'s business: the workspace list lands where the
+real tabs were, so move `tab-bar-format-tabs` in your own format and the list moves
+with it.
 
 ## Sharing the tab bar
 
@@ -81,10 +128,7 @@ in order. Turning the mode off restores the list you had, and `tab-bar-show` wit
 It defines two faces of its own and restyles nothing, so a theme's `tab-bar-tab` colours
 and packages like [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) are
 untouched. Its item keys are `workspace-N`, which collide with none of Emacs's own
-`tab-N`, `group-N` or `current-tab`. `tab-bar-auto-width` picks what to shrink by
-face rather than by key, and these faces are not in `tab-bar-auto-width-faces`
-(`:inherit` does not count), so a workspace keeps the width of its name. Add them to
-that list if you would rather it shrank them to fit.
+`tab-N`, `group-N` or `current-tab`.
 
 Real tab-bar tabs keep working. They are simply not drawn, which means Doom's
 per-workspace tab sets survive untouched: this package contributes a format item, not a

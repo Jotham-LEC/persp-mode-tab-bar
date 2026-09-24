@@ -9,6 +9,10 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 ### Added
 - **A demo of the bar in the README.** An animated shot of the workspace list
   following a walk through four sample workspaces.
+- **A customising section.** What the two faces default to, why they are compositions
+  of stock faces rather than `:inherit`, and how to take them over, with a shot of a
+  restyled bar; the three variables; and the `tab-bar-auto-width` note, moved here from
+  `Sharing the tab bar`.
 
 ## [0.2.0] — 2026-09-24
 

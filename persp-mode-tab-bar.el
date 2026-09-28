@@ -102,8 +102,10 @@ being able to overwrite it the way it can overwrite `:inherit'.")
   "The `persp-mode' hooks after which the tab bar would draw something else.")
 
 (defvar persp-mode-tab-bar--saved-state nil
-  "What the mode changed, as (FORMAT SHOW TAB-BAR-WAS-OFF), or nil.
-Nil while the mode is off, so that disabling it twice cannot restore a
+  "What the mode changed, as (FORMAT SHOW TAB-BAR-WAS-OFF SPLICED), or nil.
+SPLICED is a copy of `tab-bar-format' as the mode left it, so that
+disabling can tell what other packages changed in the meantime.  Nil
+while the mode is off, so that disabling it twice cannot restore a
 `tab-bar-format' the mode has already handed back.")
 
 (defun persp-mode-tab-bar--backend ()
@@ -201,6 +203,26 @@ FORMAT has none, the workspace list goes first instead."
         spliced
       (append spliced (list #'persp-mode-tab-bar-format-fill)))))
 
+(defun persp-mode-tab-bar--reconcile (format spliced current)
+  "Return FORMAT, updated for what others did to SPLICED to make CURRENT.
+FORMAT is `tab-bar-format' from before the mode spliced it, SPLICED what
+the splice made of it and CURRENT what it is now.  An item others added
+goes in before `tab-bar-format-align-right', or last if there is none;
+an item others removed stays out.  FORMAT comes back untouched, the very
+list, when nobody changed anything."
+  (let* ((ours '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill))
+         (added (seq-remove (lambda (item) (or (member item spliced)
+                                                (member item ours)))
+                            current))
+         (removed (seq-remove (lambda (item) (or (member item current)
+                                                  (member item ours)))
+                              spliced)))
+    (if (not (or added removed))
+        format
+      (let* ((kept (seq-remove (lambda (item) (member item removed)) format))
+             (tail (member 'tab-bar-format-align-right kept)))
+        (append (butlast kept (length tail)) added tail)))))
+
 (defun persp-mode-tab-bar--redraw (&rest _)
   "Redraw the tab bar on every frame."
   (force-mode-line-update t))
@@ -238,9 +260,11 @@ with only their prefix gone."
   ;; every workspace twice.  The hooks and the advice below are each idempotent
   ;; already.
   (unless persp-mode-tab-bar--saved-state
-    (setq persp-mode-tab-bar--saved-state
-          (list tab-bar-format tab-bar-show (not (bound-and-true-p tab-bar-mode))))
-    (setq tab-bar-format (persp-mode-tab-bar--splice tab-bar-format))
+    (let ((spliced (persp-mode-tab-bar--splice tab-bar-format)))
+      (setq persp-mode-tab-bar--saved-state
+            (list tab-bar-format tab-bar-show (not (bound-and-true-p tab-bar-mode))
+                  (copy-sequence spliced)))
+      (setq tab-bar-format spliced))
     ;; A number here hides the bar until that many real tabs exist, and a
     ;; workspace is not a tab, so it would hide a bar with everything to show.
     (when (natnump tab-bar-show)
@@ -254,13 +278,16 @@ with only their prefix gone."
     (tab-bar-mode 1)))
 
 (defun persp-mode-tab-bar--disable ()
-  "Hand `tab-bar-format' back the way it was found."
+  "Hand `tab-bar-format' back the way it was found.
+What other packages added to it or took out of it meanwhile stays done."
   (dolist (hook persp-mode-tab-bar--redraw-hooks)
     (remove-hook hook #'persp-mode-tab-bar--redraw))
   (persp-mode-tab-bar--silence-doom nil)
   (when persp-mode-tab-bar--saved-state
-    (pcase-let ((`(,format ,show ,tab-bar-was-off) persp-mode-tab-bar--saved-state))
-      (setq tab-bar-format format
+    (pcase-let ((`(,format ,show ,tab-bar-was-off ,spliced)
+                 persp-mode-tab-bar--saved-state))
+      (setq tab-bar-format (persp-mode-tab-bar--reconcile
+                            format spliced tab-bar-format)
             tab-bar-show show)
       (when tab-bar-was-off
         (tab-bar-mode -1)))
@@ -275,8 +302,9 @@ The workspace list replaces the items of `tab-bar-format' named by
 `persp-mode-tab-bar-replace', which are the ones that draw the real
 tab-bar tabs.  Everything else in the format is left alone, so other
 tab-bar packages keep their place, and turning the mode off restores the
-format and `tab-bar-show' as they were.  The tab bar itself is only
-turned off again if this mode was what turned it on.
+format and `tab-bar-show' as they were, keeping whatever other packages
+added to the format or removed from it in the meantime.  The tab bar
+itself is only turned off again if this mode was what turned it on.
 
 Real tab-bar tabs are unaffected: they are simply not drawn."
   :global t

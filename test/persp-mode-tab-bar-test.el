@@ -155,6 +155,41 @@
       (should (eq tab-bar-format restored)))))
 
 
+;; Other packages go on editing `tab-bar-format' while the mode is on, and
+;; turning it off must not undo their work along with ours.
+
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-added-while-on ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-format-align-right 'tab-bar-format-global))
+    (persp-mode-tab-bar-mode 1)
+    (add-to-list 'tab-bar-format 'foreign-item t)
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history tab-bar-format-tabs
+                     foreign-item tab-bar-format-align-right
+                     tab-bar-format-global)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-appends-an-added-item-without-align-right ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode 1)
+    (push 'foreign-item tab-bar-format)
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history tab-bar-format-tabs foreign-item)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-removed-while-on-removed ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-format-align-right 'tab-bar-format-global))
+    (persp-mode-tab-bar-mode 1)
+    (setq tab-bar-format (remq 'tab-bar-format-global tab-bar-format))
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history tab-bar-format-tabs
+                     tab-bar-format-align-right)))))
+
 ;;; Backend selection
 
 (ert-deftest persp-mode-tab-bar-redraws-on-hooks-persp-mode-defines ()

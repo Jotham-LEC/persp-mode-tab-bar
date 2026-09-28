@@ -320,5 +320,13 @@ Real tab-bar tabs are unaffected: they are simply not drawn."
       (persp-mode-tab-bar--enable)
     (persp-mode-tab-bar--disable)))
 
+(defun persp-mode-tab-bar-unload-function ()
+  "Turn the mode off ahead of `unload-feature'.
+Otherwise `tab-bar-format' would go on naming functions that no longer
+exist, and the hooks and advice would stay.  Return nil, so that the
+rest of the unloading goes ahead."
+  (persp-mode-tab-bar-mode -1)
+  nil)
+
 (provide 'persp-mode-tab-bar)
 ;;; persp-mode-tab-bar.el ends here

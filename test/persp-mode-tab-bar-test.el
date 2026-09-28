@@ -193,6 +193,32 @@
                    '(tab-bar-format-history tab-bar-format-tabs
                      tab-bar-format-align-right)))))
 
+;;; Unloading
+
+(defun persp-mode-tab-bar-test--ours-p (item)
+  "Return non-nil if ITEM is a symbol this package defines."
+  (and (symbolp item)
+       (string-prefix-p "persp-mode-tab-bar" (symbol-name item))))
+
+(ert-deftest persp-mode-tab-bar-unloading-leaves-nothing-behind ()
+  (let ((format tab-bar-format)
+        (show tab-bar-show)
+        (hooks '(persp-activated-functions
+                 persp-names-cache-changed-functions
+                 persp-renamed-functions)))
+    (unwind-protect
+        (cl-letf (((symbol-function 'tab-bar-mode) #'ignore))
+          (persp-mode-tab-bar-mode 1)
+          (unload-feature 'persp-mode-tab-bar t)
+          ;; A symbol left in the format is a void function on every redraw.
+          (should-not (seq-some #'persp-mode-tab-bar-test--ours-p tab-bar-format))
+          (dolist (hook hooks)
+            (should-not (seq-some #'persp-mode-tab-bar-test--ours-p
+                                  (symbol-value hook)))))
+      (setq tab-bar-format format
+            tab-bar-show show)
+      (require 'persp-mode-tab-bar))))
+
 ;;; Backend selection
 
 (ert-deftest persp-mode-tab-bar-redraws-on-hooks-persp-mode-defines ()

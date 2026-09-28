@@ -4,7 +4,9 @@ PACKAGE := persp-mode-tab-bar
 # Dependencies live in the checkout so that a local run and a CI run see the
 # same versions, and neither touches the Emacs you actually use.
 INIT := --eval '(progn (require (quote package)) (setq package-user-dir (expand-file-name ".deps")) (add-to-list (quote package-archives) (cons "melpa" "https://melpa.org/packages/") t) (package-initialize))'
-BATCH := $(EMACS) -Q --batch $(INIT) -L . -L test
+# Point PERSP_MODE_DIR at a persp-mode checkout to build and test against that
+# instead of the one in .deps, e.g. the oldest release the package supports.
+BATCH := $(EMACS) -Q --batch $(INIT) $(if $(PERSP_MODE_DIR),-L $(PERSP_MODE_DIR)) -L . -L test
 
 .PHONY: all deps compile checkdoc package-lint lint test clean
 

@@ -6,7 +6,39 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-09-28
+
+### Fixed
+- **Turning the mode off threw away other packages' changes to `tab-bar-format`.**
+  It put back the format it had saved on the way in, wholesale, so an item another
+  package added while the mode was on vanished, and one it removed came back. The mode
+  now remembers the format as it left it and, on the way out, keeps what others did:
+  an added item goes back in before `tab-bar-format-align-right`, or last without one,
+  and a removed item stays out.
+- **The README's `:hook` recipe left an empty bar when persp-mode was turned off.**
+  Calling the mode from `persp-mode-hook` with no argument turns it on, on the way out
+  as well as the way in, and the format item returned nothing without persp-mode.
+  Without persp-mode it now draws the real tabs, and the recipe passes `1` or `-1` to
+  follow persp-mode both ways.
+- **The "+" button stayed next to the workspace list.** `tab-bar-format-add-tab`, in
+  Emacs's default format since 28.1, made a real tab the bar did not draw. It is in
+  `persp-mode-tab-bar-replace` by default now.
+- **`unload-feature` left `tab-bar-format` naming functions that no longer existed.**
+  `persp-mode-tab-bar-unload-function` turns the mode off first.
+- **The package claimed to work with persp-mode 2.9.8.** It redraws on
+  `persp-names-cache-changed-functions`, which arrived in 3.0.8, and against 2.9.8
+  the bar went stale when a workspace came or went. `Package-Requires` says 3.0.8.
+
 ### Added
+- **CI on Emacs snapshot, against persp-mode 3.0.8, and through melpazoid.**
+  `PERSP_MODE_DIR` in the Makefile tests against a persp-mode checkout of your
+  choosing.
+- **An alternatives section in the README**, for people not on persp-mode, and a
+  note that turning the tab bar on in Doom also turns on its per-workspace tab save
+  and restore.
+- **A README note on right-click.** The tab bar's context menu is bound for the whole
+  bar and picks its entries by item key, so on a workspace it offers "New tab" and
+  "Reopen closed tab". There is no per-item way round it.
 - **A demo of the bar in the README.** An animated shot of the workspace list
   following a walk through four sample workspaces.
 - **A customising section.** What the two faces default to, why they are compositions
@@ -79,7 +111,8 @@ in daily use.
 - **Faces `persp-mode-tab-bar-current` and `persp-mode-tab-bar-inactive`**, composed
   from stock faces so the tab bar's own faces are never restyled.
 
-[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.1.0

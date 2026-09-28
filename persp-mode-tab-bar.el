@@ -6,7 +6,7 @@
 ;; Assisted-by: Claude:claude-opus-5
 ;; URL: https://github.com/Jotham-LEC/persp-mode-tab-bar
 ;; Version: 0.2.0
-;; Package-Requires: ((emacs "29.1") (persp-mode "2.9.8"))
+;; Package-Requires: ((emacs "29.1") (persp-mode "3.0.8"))
 ;; Keywords: convenience, frames
 
 ;; This program is free software: you can redistribute it and/or modify

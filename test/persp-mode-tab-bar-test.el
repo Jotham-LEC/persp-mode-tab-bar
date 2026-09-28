@@ -157,6 +157,13 @@
 
 ;;; Backend selection
 
+(ert-deftest persp-mode-tab-bar-redraws-on-hooks-persp-mode-defines ()
+  ;; `add-hook' on a hook nobody defines makes the variable and never runs it,
+  ;; so an older persp-mode would leave the bar stale without a word.  Only a
+  ;; `defcustom' leaves a standard value behind; `add-hook' does not.
+  (dolist (hook persp-mode-tab-bar--redraw-hooks)
+    (should (get hook 'standard-value))))
+
 (ert-deftest persp-mode-tab-bar-backend-detects-doom ()
   (let ((persp-mode-tab-bar-backend 'auto))
     (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))

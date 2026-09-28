@@ -155,8 +155,13 @@ while the mode is off, so that disabling it twice cannot restore a
 
 ;;;###autoload
 (defun persp-mode-tab-bar-format ()
-  "Return one tab-bar item per workspace; click one to switch to it."
-  (when (bound-and-true-p persp-mode)
+  "Return one tab-bar item per workspace; click one to switch to it.
+While `persp-mode' is off there are no workspaces to show, so return the
+real tabs instead, as `tab-bar-format-tabs' draws them."
+  (if (not (bound-and-true-p persp-mode))
+      ;; Otherwise turning persp-mode off under a mode that stays on -- hung
+      ;; off `persp-mode-hook', say -- would leave an empty bar.
+      (tab-bar-format-tabs)
     (let ((current (persp-mode-tab-bar--current-name))
           (index 0))
       (mapcar

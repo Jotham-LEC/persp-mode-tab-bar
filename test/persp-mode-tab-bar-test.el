@@ -44,9 +44,12 @@
         (funcall (nth 3 (nth 1 (persp-mode-tab-bar-format))))))
     (should (equal switched "docs"))))
 
-(ert-deftest persp-mode-tab-bar-format-is-empty-without-persp-mode ()
+(ert-deftest persp-mode-tab-bar-format-draws-the-real-tabs-without-persp-mode ()
+  ;; With the mode hung off `persp-mode-hook', turning persp-mode off leaves
+  ;; the mode on, and an empty list here would leave an empty bar.
   (let ((persp-mode nil))
-    (should (null (persp-mode-tab-bar-format)))))
+    (should (tab-bar-format-tabs))
+    (should (equal (persp-mode-tab-bar-format) (tab-bar-format-tabs)))))
 
 
 ;;; Splicing into `tab-bar-format'

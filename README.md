@@ -17,7 +17,7 @@ Not on MELPA yet. With `use-package` and Emacs 30's `:vc`:
 ```elisp
 (use-package persp-mode-tab-bar
   :vc (:url "https://github.com/Jotham-LEC/persp-mode-tab-bar" :rev :newest)
-  :hook (persp-mode . persp-mode-tab-bar-mode))
+  :hook (persp-mode . (lambda () (persp-mode-tab-bar-mode (if persp-mode 1 -1)))))
 ```
 
 Or with [straight.el](https://github.com/radian-software/straight.el):

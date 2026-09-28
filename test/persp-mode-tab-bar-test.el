@@ -65,13 +65,13 @@
                    tab-bar-format-align-right
                    tab-bar-format-global))))
 
-(ert-deftest persp-mode-tab-bar-splice-keeps-the-emacs-default-intact ()
+(ert-deftest persp-mode-tab-bar-splice-drops-the-new-tab-button-from-the-emacs-default ()
+  ;; The "+" makes a real tab, which the bar would then not draw.
   (should (equal (persp-mode-tab-bar--splice
                   '(tab-bar-format-history tab-bar-format-tabs
                     tab-bar-separator tab-bar-format-add-tab))
                  '(tab-bar-format-history persp-mode-tab-bar-format
-                   tab-bar-separator tab-bar-format-add-tab
-                   persp-mode-tab-bar-format-fill))))
+                   tab-bar-separator persp-mode-tab-bar-format-fill))))
 
 (ert-deftest persp-mode-tab-bar-splice-fills-when-nothing-aligns-right ()
   (should (equal (persp-mode-tab-bar--splice '(tab-bar-format-tabs))

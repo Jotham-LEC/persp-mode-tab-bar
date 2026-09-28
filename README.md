@@ -70,12 +70,14 @@ The spacing around a name is the tab bar's, not this package's: `tab-bar-separat
 | Variable                               | Default                   | Does                                                                         |
 | -------------------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
 | `persp-mode-tab-bar-backend`           | `auto`                    | pins the workspace API — `doom` or `persp-mode` — instead of detecting it    |
-| `persp-mode-tab-bar-replace`           | the two tab-drawing items | which `tab-bar-format` items the workspace list stands in for                |
+| `persp-mode-tab-bar-replace`           | the tab items and the `+` | which `tab-bar-format` items the workspace list stands in for                |
 | `persp-mode-tab-bar-silence-doom-echo` | `t`                       | drops Doom's echoed workspace list, which the bar is now showing permanently |
 
 ## Compatibility
 
 The mode contributes one `tab-bar-format` item rather than taking the bar. It splices the workspace list in where the real tabs were and leaves every other item where it found it, so history buttons, `tab-bar-format-global` and packages like [tab-bar-echo-area](https://github.com/fritzgrabo/tab-bar-echo-area) or [tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) go on working; turning the mode off puts the format back, and `tab-bar-show` with it. Its own two faces leave themes and [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) alone, and its `workspace-N` item keys collide with none of Emacs's. Real tab-bar tabs, Doom's per-workspace tab sets included, keep working — they are simply not drawn.
+
+One thing it can't fix: right-clicking a workspace brings up the tab bar's own context menu, with "New tab" and "Reopen closed tab" in it, and both make a real tab you then can't see. That menu is bound once for the whole bar in `tab-bar-map` and decides what to offer from the item's key, so there is no way to give these items a menu of their own.
 
 ## Contributing
 

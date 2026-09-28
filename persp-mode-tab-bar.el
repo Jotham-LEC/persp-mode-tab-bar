@@ -71,12 +71,14 @@ want its notion of the workspace list."
                  (const :tag "Plain persp-mode" persp-mode)))
 
 (defcustom persp-mode-tab-bar-replace
-  '(tab-bar-format-tabs tab-bar-format-tabs-groups)
+  '(tab-bar-format-tabs tab-bar-format-tabs-groups tab-bar-format-add-tab)
   "The `tab-bar-format' items this mode takes the place of.
 These are the items that draw the real tab-bar tabs; left in, they would
-put a second row of tabs beside the workspace list.  Everything else in
-`tab-bar-format' -- history buttons, separators, the global string,
-whatever other packages have added -- stays exactly where it is."
+put a second row of tabs beside the workspace list.  The \"+\" button of
+`tab-bar-format-add-tab' is here too, since the tab it makes would not be
+drawn.  Everything else in `tab-bar-format' -- history buttons,
+separators, the global string, whatever other packages have added --
+stays exactly where it is."
   :type '(repeat function))
 
 (defcustom persp-mode-tab-bar-silence-doom-echo t

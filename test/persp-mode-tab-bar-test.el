@@ -158,6 +158,17 @@
     (persp-mode-tab-bar-mode -1)
     (should (eq tab-bar-show 1))))
 
+(ert-deftest persp-mode-tab-bar-disabling-keeps-a-tab-bar-show-set-while-on ()
+  ;; Hiding the bar while the mode is on is a choice the way out must not undo,
+  ;; whether the mode had changed `tab-bar-show' on the way in or not.
+  (dolist (before '(t 1))
+    (persp-mode-tab-bar-test--with-tab-bar
+      (setq tab-bar-show before)
+      (persp-mode-tab-bar-mode 1)
+      (setq tab-bar-show nil)
+      (persp-mode-tab-bar-mode -1)
+      (should (eq tab-bar-show nil)))))
+
 (ert-deftest persp-mode-tab-bar-enabling-leaves-a-boolean-tab-bar-show-alone ()
   (persp-mode-tab-bar-test--with-tab-bar
     (setq tab-bar-show nil)

@@ -288,7 +288,9 @@ What other packages added to it or took out of it meanwhile stays done."
                  persp-mode-tab-bar--saved-state))
       (setq tab-bar-format (persp-mode-tab-bar--reconcile
                             format spliced tab-bar-format))
-      (unless (eq tab-bar-show show)
+      ;; Only a number the mode turned into t goes back, and only while it is
+      ;; still t: any other value is a choice somebody made since.
+      (when (and (natnump show) (eq tab-bar-show t))
         (setq tab-bar-show show)
         (tab-bar--update-tab-bar-lines t))
       (when tab-bar-was-off
@@ -304,9 +306,11 @@ The workspace list replaces the items of `tab-bar-format' named by
 `persp-mode-tab-bar-replace', which are the ones that draw the real
 tab-bar tabs.  Everything else in the format is left alone, so other
 tab-bar packages keep their place, and turning the mode off restores the
-format and `tab-bar-show' as they were, keeping whatever other packages
-added to the format or removed from it in the meantime.  The tab bar
-itself is only turned off again if this mode was what turned it on.
+format as it was, keeping whatever other packages added to it or removed
+from it in the meantime.  A number in `tab-bar-show', which the mode
+makes t, comes back too, unless something else has set `tab-bar-show'
+since.  The tab bar itself is only turned off again if this mode was
+what turned it on.
 
 Real tab-bar tabs are unaffected: they are simply not drawn."
   :global t

@@ -237,6 +237,21 @@
                      tab-bar-format-tabs
                      tab-bar-format-align-right)))))
 
+(ert-deftest persp-mode-tab-bar-disabling-hands-back-a-replaced-item-added-again-once ()
+  ;; The "+" is gone while the mode is on, so a package that wants it adds it
+  ;; back; the format the mode hands back has it already.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-separator 'tab-bar-format-add-tab))
+    (persp-mode-tab-bar-mode 1)
+    (add-to-list 'tab-bar-format 'tab-bar-format-add-tab t)
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
+                     tab-bar-separator
+                     tab-bar-format-add-tab)))))
+
 ;;; Unloading
 
 (defun persp-mode-tab-bar-test--ours-p (item)

@@ -142,12 +142,11 @@ while the mode is off, so that disabling it twice cannot restore a
         (+workspace-switch name)
       (persp-frame-switch name))))
 
-;;;###autoload
 (defun persp-mode-tab-bar-format ()
   "Return one tab-bar item per workspace; click one to switch to it.
 While `persp-mode' is off there are no workspaces to show, so return the
 real tabs instead, as `tab-bar-format-tabs' draws them."
-  (if (not (bound-and-true-p persp-mode))
+  (if (not persp-mode)
       ;; Otherwise turning persp-mode off under a mode that stays on -- hung
       ;; off `persp-mode-hook', say -- would leave an empty bar.
       (tab-bar-format-tabs)
@@ -201,16 +200,14 @@ FORMAT has none, the workspace list goes first instead."
   "Return FORMAT, updated for what others did to SPLICED to make CURRENT.
 FORMAT is `tab-bar-format' from before the mode spliced it, SPLICED what
 the splice made of it and CURRENT what it is now.  An item others added
-goes in before `tab-bar-format-align-right', or last if there is none;
+goes in before `tab-bar-format-align-right', or last if there is none,
+unless FORMAT has it already, as it has the items the splice replaced;
 an item others removed stays out.  FORMAT comes back untouched, the very
 list, when nobody changed anything."
-  (let* ((ours '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill))
-         (added (seq-remove (lambda (item) (or (member item spliced)
-                                               (member item ours)))
-                            current))
-         (removed (seq-remove (lambda (item) (or (member item current)
-                                                 (member item ours)))
-                              spliced)))
+  (let ((added (seq-remove (lambda (item) (or (member item spliced)
+                                              (member item format)))
+                           current))
+        (removed (seq-remove (lambda (item) (member item current)) spliced)))
     (if (not (or added removed))
         format
       (let* ((kept (seq-remove (lambda (item) (member item removed)) format))
@@ -260,7 +257,7 @@ All it does is echo the workspace list, which the tab bar is showing.")
   (unless persp-mode-tab-bar--saved-state
     (let ((spliced (persp-mode-tab-bar--splice tab-bar-format)))
       (setq persp-mode-tab-bar--saved-state
-            (list tab-bar-format tab-bar-show (not (bound-and-true-p tab-bar-mode))
+            (list tab-bar-format tab-bar-show (not tab-bar-mode)
                   (copy-sequence spliced)))
       (setq tab-bar-format spliced))
     ;; A number here hides the bar until that many real tabs exist, and a
@@ -276,7 +273,7 @@ All it does is echo the workspace list, which the tab bar is showing.")
   (when (and persp-mode-tab-bar-silence-doom-echo
              (persp-mode-tab-bar--doom-p))
     (persp-mode-tab-bar--silence-doom t))
-  (unless (bound-and-true-p tab-bar-mode)
+  (unless tab-bar-mode
     (tab-bar-mode 1)))
 
 (defun persp-mode-tab-bar--disable ()

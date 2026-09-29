@@ -306,6 +306,25 @@
     (should (equal (substring-no-properties formatted) "Renamed '#1'->'docs'"))
     (should (eq (get-text-property 0 'face formatted) 'success))))
 
+(ert-deftest persp-mode-tab-bar-silences-doom-before-doom-defines-the-echo ()
+  ;; Doom autoloads `+workspace/display' and not `+workspace--message-body',
+  ;; so the mode comes on before the second is defined.
+  (should-not (fboundp '+workspace--message-body))
+  (persp-mode-tab-bar-test--with-tab-bar
+    (unwind-protect
+        (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))
+          (persp-mode-tab-bar-mode 1)
+          (should (advice-member-p #'persp-mode-tab-bar--message-body
+                                   '+workspace--message-body))
+          (should (advice-member-p #'persp-mode-tab-bar--display
+                                   '+workspace/display))
+          (persp-mode-tab-bar-mode -1)
+          (should-not (advice-member-p #'persp-mode-tab-bar--message-body
+                                       '+workspace--message-body))
+          (should-not (advice-member-p #'persp-mode-tab-bar--display
+                                       '+workspace/display)))
+      (persp-mode-tab-bar--silence-doom nil))))
+
 
 ;;; Against a real persp-mode
 

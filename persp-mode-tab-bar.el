@@ -245,19 +245,23 @@ with only their prefix gone."
                       ('success 'success)
                       ('info 'font-lock-comment-face))))
 
+(defun persp-mode-tab-bar--display (&rest _)
+  "Say nothing, in place of Doom's `+workspace/display'.
+All it does is echo the workspace list, which the tab bar is showing.")
+
 (defun persp-mode-tab-bar--silence-doom (silence)
   "Advise Doom's workspace echo away when SILENCE, and restore it otherwise."
+  ;; Neither need be defined yet: Doom autoloads `+workspace/display' but not
+  ;; `+workspace--message-body', which arrives with the first workspace
+  ;; command.  Advice on an undefined function waits for its definition.
   (if silence
       (progn
-        ;; Advising an unbound symbol would define it, so ask after each one
-        ;; rather than taking Doom's presence as a whole.
-        (when (fboundp '+workspace--message-body)
-          (advice-add '+workspace--message-body :override
-                      #'persp-mode-tab-bar--message-body))
-        (when (fboundp '+workspace/display)
-          (advice-add '+workspace/display :override #'ignore)))
+        (advice-add '+workspace--message-body :override
+                    #'persp-mode-tab-bar--message-body)
+        (advice-add '+workspace/display :override
+                    #'persp-mode-tab-bar--display))
     (advice-remove '+workspace--message-body #'persp-mode-tab-bar--message-body)
-    (advice-remove '+workspace/display #'ignore)))
+    (advice-remove '+workspace/display #'persp-mode-tab-bar--display)))
 
 (defun persp-mode-tab-bar--enable ()
   "Put the workspace list in the tab bar and show the bar."

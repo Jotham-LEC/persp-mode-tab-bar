@@ -127,6 +127,30 @@
                    persp-mode-tab-bar-format-fill))))
 
 
+;; A `tab-bar-format' saved with Customize while the mode was on names the
+;; mode's own items, and the next session turns the mode on over it.
+
+(ert-deftest persp-mode-tab-bar-splice-keeps-a-workspace-list-already-there ()
+  (should (equal (persp-mode-tab-bar--splice
+                  '(tab-bar-format-history
+                    persp-mode-tab-bar-format
+                    tab-bar-separator
+                    persp-mode-tab-bar-format-fill))
+                 '(tab-bar-format-history
+                   persp-mode-tab-bar-format
+                   tab-bar-separator
+                   persp-mode-tab-bar-format-fill))))
+
+(ert-deftest persp-mode-tab-bar-splice-drops-a-fill-align-right-makes-redundant ()
+  (should (equal (persp-mode-tab-bar--splice
+                  '(persp-mode-tab-bar-format
+                    persp-mode-tab-bar-format-fill
+                    tab-bar-format-align-right
+                    tab-bar-format-global))
+                 '(persp-mode-tab-bar-format
+                   tab-bar-format-align-right
+                   tab-bar-format-global))))
+
 ;;; Enabling and disabling
 
 (defmacro persp-mode-tab-bar-test--with-tab-bar (&rest body)
@@ -241,6 +265,18 @@
     (persp-mode-tab-bar-mode 1)
     (should (equal tab-bar-format
                    '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill)))))
+
+(ert-deftest persp-mode-tab-bar-enabling-over-a-saved-format-lists-once ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode 1)
+    (let ((saved (copy-sequence tab-bar-format)))
+      (persp-mode-tab-bar-mode -1)
+      (setq tab-bar-format saved)
+      (persp-mode-tab-bar-mode 1)
+      (should (equal tab-bar-format saved))
+      (persp-mode-tab-bar-mode -1)
+      (should (equal tab-bar-format saved)))))
 
 (ert-deftest persp-mode-tab-bar-disabling-twice-restores-once ()
   (persp-mode-tab-bar-test--with-tab-bar

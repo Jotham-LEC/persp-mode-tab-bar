@@ -180,10 +180,16 @@ real tabs instead, as `tab-bar-format-tabs' draws them."
 (defun persp-mode-tab-bar--splice (format)
   "Return FORMAT with the workspace list in place of the real tabs.
 Items named by `persp-mode-tab-bar-replace' give up their place; if
-FORMAT has none, the workspace list goes first instead."
+FORMAT has none, the workspace list goes first instead.  A FORMAT that
+has the workspace list already, as one saved with Customize while the
+mode was on does, keeps it where it is, and only the one."
   (let* ((replaced nil)
          (spliced (mapcan (lambda (item)
-                            (cond ((not (memq item persp-mode-tab-bar-replace))
+                            (cond ((eq item #'persp-mode-tab-bar-format-fill)
+                                   nil)
+                                  ((not (memq item
+                                              (cons #'persp-mode-tab-bar-format
+                                                    persp-mode-tab-bar-replace)))
                                    (list item))
                                   (replaced nil)
                                   (t (setq replaced t)

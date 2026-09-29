@@ -23,6 +23,21 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 - **A replaced item added back while the mode was on came back twice.** A package
   adding the "+" button while the mode was on left two of them in the format the mode
   handed back.
+- **Turning the mode off undid a `tab-bar-show` set while it was on.** Hiding the bar
+  with `setopt` while the mode was on came undone on the way out, even when the mode
+  had never touched `tab-bar-show`. Only a number the mode made `t` goes back now, and
+  only while it is still `t`.
+- **A `tab-bar-format` that already had the workspace list got a second one.** A
+  format saved with Customize while the mode was on names the mode's own items, and
+  turning the mode on over it next session put another list in front and another
+  fill item at the end.
+- **Turning the mode off turned off a tab bar that was already off.** If the mode had
+  turned the tab bar on and you then turned it off yourself, turning the mode off
+  turned it off again, rerunning `tab-bar-mode-hook`, which Doom hangs its
+  per-workspace tab handling off.
+- **`persp-mode-tab-bar-silence-doom-echo` set while the mode was on did nothing**
+  until the mode was toggled. Setting it with `setopt` or Customize now takes effect
+  straight away.
 - **The face docstring said the default was not `:inherit`.** It is: the faces
   inherit from `bold` and `highlight`, and from `shadow` and `tab-bar-tab-inactive`.
 - **The README said `SPC TAB .` shows Doom's workspace list.** It is

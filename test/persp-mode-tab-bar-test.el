@@ -135,6 +135,42 @@
     (persp-mode-tab-bar-mode 1)
     (should (eq tab-bar-show nil))))
 
+(defmacro persp-mode-tab-bar-test--with-real-tab-bar (runs &rest body)
+  "Run BODY with the real `tab-bar-mode', counting its hook's runs in RUNS."
+  (declare (indent 1))
+  (let ((was-on (make-symbol "was-on"))
+        (count (make-symbol "count")))
+    `(let* ((tab-bar-format (copy-sequence tab-bar-format))
+            (tab-bar-show tab-bar-show)
+            (default-frame-alist default-frame-alist)
+            (persp-mode-tab-bar--saved-state nil)
+            (persp-mode-tab-bar-mode nil)
+            (,was-on tab-bar-mode)
+            (,runs 0)
+            (,count (lambda () (setq ,runs (1+ ,runs)))))
+       (unwind-protect
+           (progn
+             (add-hook 'tab-bar-mode-hook ,count)
+             ,@body)
+         (remove-hook 'tab-bar-mode-hook ,count)
+         (dolist (hook persp-mode-tab-bar--redraw-hooks)
+           (remove-hook hook #'persp-mode-tab-bar--redraw))
+         (tab-bar-mode (if ,was-on 1 -1))))))
+
+(ert-deftest persp-mode-tab-bar-enabling-draws-a-bar-a-tab-count-had-hidden ()
+  (persp-mode-tab-bar-test--with-real-tab-bar runs
+    (setq tab-bar-show 1)
+    (tab-bar-mode 1)
+    ;; One tab, so `tab-bar-show' has the bar hidden.
+    (should (eq (frame-parameter nil 'tab-bar-lines) 0))
+    (setq runs 0)
+    (persp-mode-tab-bar-mode 1)
+    (should (eq (frame-parameter nil 'tab-bar-lines) 1))
+    (persp-mode-tab-bar-mode -1)
+    (should (eq (frame-parameter nil 'tab-bar-lines) 0))
+    ;; Doom hangs its per-workspace tab handling off this hook.
+    (should (= runs 0))))
+
 (ert-deftest persp-mode-tab-bar-enabling-adds-the-redraw-hooks ()
   (persp-mode-tab-bar-test--with-tab-bar
     (persp-mode-tab-bar-mode 1)

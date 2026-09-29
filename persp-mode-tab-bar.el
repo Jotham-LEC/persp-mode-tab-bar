@@ -274,8 +274,12 @@ with only their prefix gone."
       (setq tab-bar-format spliced))
     ;; A number here hides the bar until that many real tabs exist, and a
     ;; workspace is not a tab, so it would hide a bar with everything to show.
+    ;; Setting the variable alone does not redraw a bar already hidden, and
+    ;; calling `tab-bar-mode' to do it would run its hook, which Doom hangs
+    ;; its per-workspace tab handling off.
     (when (natnump tab-bar-show)
-      (setq tab-bar-show t)))
+      (setq tab-bar-show t)
+      (tab-bar--update-tab-bar-lines t)))
   (dolist (hook persp-mode-tab-bar--redraw-hooks)
     (add-hook hook #'persp-mode-tab-bar--redraw))
   (when (and persp-mode-tab-bar-silence-doom-echo
@@ -294,8 +298,10 @@ What other packages added to it or took out of it meanwhile stays done."
     (pcase-let ((`(,format ,show ,tab-bar-was-off ,spliced)
                  persp-mode-tab-bar--saved-state))
       (setq tab-bar-format (persp-mode-tab-bar--reconcile
-                            format spliced tab-bar-format)
-            tab-bar-show show)
+                            format spliced tab-bar-format))
+      (unless (eq tab-bar-show show)
+        (setq tab-bar-show show)
+        (tab-bar--update-tab-bar-lines t))
       (when tab-bar-was-off
         (tab-bar-mode -1)))
     (setq persp-mode-tab-bar--saved-state nil))

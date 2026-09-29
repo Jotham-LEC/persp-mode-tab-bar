@@ -299,7 +299,8 @@ What other packages added to it or took out of it meanwhile stays done."
       (when (and (natnump show) (eq tab-bar-show t))
         (setq tab-bar-show show)
         (tab-bar--update-tab-bar-lines t))
-      (when tab-bar-was-off
+      ;; Turning it off again when the user already has would rerun its hook.
+      (when (and tab-bar-was-off tab-bar-mode)
         (tab-bar-mode -1)))
     (setq persp-mode-tab-bar--saved-state nil))
   (force-mode-line-update t))

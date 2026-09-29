@@ -247,6 +247,17 @@
     (persp-mode-tab-bar-mode -1)
     (should tab-bar-mode)))
 
+;; Doom hangs its per-workspace tab handling off `tab-bar-mode-hook'.
+(ert-deftest persp-mode-tab-bar-leaves-a-tab-bar-turned-off-while-on-alone ()
+  (persp-mode-tab-bar-test--with-real-tab-bar runs
+    (tab-bar-mode -1)
+    (persp-mode-tab-bar-mode 1)
+    (tab-bar-mode -1)
+    (setq runs 0)
+    (persp-mode-tab-bar-mode -1)
+    (should-not tab-bar-mode)
+    (should (= runs 0))))
+
 (ert-deftest persp-mode-tab-bar-enabling-adds-the-redraw-hooks ()
   (persp-mode-tab-bar-test--with-tab-bar
     (persp-mode-tab-bar-mode 1)

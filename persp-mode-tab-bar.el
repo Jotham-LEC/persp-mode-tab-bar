@@ -79,12 +79,12 @@ by setting this to nil; it has no effect outside Doom."
 
 (defface persp-mode-tab-bar-current '((t :inherit (bold highlight)))
   "Face for the current workspace.
-The default composes two stock faces at the point of use rather than
-restyling anything, so it follows the theme's accent without a theme
-being able to overwrite it the way it can overwrite `:inherit'.")
+The default inherits from `bold' and `highlight', so it follows the
+theme without restyling any face the theme or another package owns.")
 
 (defface persp-mode-tab-bar-inactive '((t :inherit (shadow tab-bar-tab-inactive)))
-  "Face for a workspace other than the current one.")
+  "Face for a workspace other than the current one.
+The default inherits from `shadow' and `tab-bar-tab-inactive'.")
 
 (defconst persp-mode-tab-bar--redraw-hooks
   '(persp-activated-functions
@@ -155,11 +155,12 @@ real tabs instead, as `tab-bar-format-tabs' draws them."
       (mapcar
        (lambda (name)
          (setq index (1+ index))
-         ;; `tab-bar-auto-width' picks what to shrink by face, not by key: an
-         ;; item is resizable when its own face is in
-         ;; `tab-bar-auto-width-faces', which these are not, `:inherit'
-         ;; included.  So a workspace keeps the width of its name unless you
-         ;; add these faces to that list yourself.
+         ;; `tab-bar-auto-width' shrinks an item whose own face is in
+         ;; `tab-bar-auto-width-faces', `:inherit' not counting, and from
+         ;; Emacs 31, while that list is left at its default, one whose key
+         ;; starts "tab-", "group-" or "current-tab" instead.  These items
+         ;; match neither, so a workspace keeps the width of its name unless
+         ;; you add these faces to that list yourself.
          `(,(intern (format "workspace-%d" index))
            menu-item
            ,(propertize (format " %d %s " index name)

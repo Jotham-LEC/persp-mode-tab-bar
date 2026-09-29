@@ -52,6 +52,23 @@
     (should (tab-bar-format-tabs))
     (should (equal (persp-mode-tab-bar-format) (tab-bar-format-tabs)))))
 
+(ert-deftest persp-mode-tab-bar-format-keeps-the-width-of-each-name ()
+  ;; As the README says: `tab-bar-auto-width' leaves these items alone unless
+  ;; their faces are added to `tab-bar-auto-width-faces'.
+  (persp-mode-tab-bar-test--with-workspaces '("main" "docs") "main"
+    (let ((names (lambda (items)
+                   (mapcar (lambda (item) (substring-no-properties (nth 2 item)))
+                           items)))
+          (tab-bar--auto-width-hash nil))
+      (should (equal (funcall names (tab-bar-auto-width (persp-mode-tab-bar-format)))
+                     '(" 1 main " " 2 docs ")))
+      (let ((tab-bar-auto-width-faces (append '(persp-mode-tab-bar-current
+                                                persp-mode-tab-bar-inactive)
+                                              tab-bar-auto-width-faces)))
+        (should-not (equal (funcall names
+                                    (tab-bar-auto-width (persp-mode-tab-bar-format)))
+                           '(" 1 main " " 2 docs ")))))))
+
 
 ;;; Splicing into `tab-bar-format'
 

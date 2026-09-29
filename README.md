@@ -42,7 +42,7 @@ Emacs 29.1 or newer, and persp-mode 3.0.8 or newer.
 (persp-mode-tab-bar-mode 1)
 ```
 
-In Doom, where `:ui workspaces` gives you persp-mode already, the mode detects the `+workspace` commands and uses them, so the numbering and the order match what `SPC TAB .` displays. It also silences Doom's echoed workspace list, since the bar is now saying the same thing permanently. Set `persp-mode-tab-bar-silence-doom-echo` to `nil` if you want both. Doom's `:ui tabs` is centaur-tabs, which tabs buffers — the two do not overlap.
+In Doom, where `:ui workspaces` gives you persp-mode already, the mode detects the `+workspace` commands and uses them, so the numbering and the order match what `+workspace/display` (`SPC TAB TAB`) shows. It also silences Doom's echoed workspace list, since the bar is now saying the same thing permanently, which leaves `+workspace/display`, whose only job is to echo it, doing nothing. Set `persp-mode-tab-bar-silence-doom-echo` to `nil` if you want both. Doom's `:ui tabs` is centaur-tabs, which tabs buffers — the two do not overlap.
 
 One Doom side effect: `:ui workspaces` hangs its tab-bar integration off `tab-bar-mode-hook` (`modules/ui/workspaces/config.el`), so turning on the tab bar, which this mode does, also turns on Doom saving each workspace's real tabs when you leave it and restoring them when you come back, and writing them to the session file. It's harmless, since the tabs aren't drawn, but it's why a workspace can come back with tabs you can't see.
 
@@ -53,7 +53,7 @@ One Doom side effect: `:ui workspaces` hangs its tab-bar integration off `tab-ba
 | `persp-mode-tab-bar-current`  | `bold` + `highlight`              | the workspace you are in |
 | `persp-mode-tab-bar-inactive` | `shadow` + `tab-bar-tab-inactive` | every other workspace    |
 
-Both defaults are compositions of stock faces, so the list follows whatever theme you load. To override, set them the way you set any other face — `custom-set-faces`, or `:custom-face` in a `use-package` block, or `M-x customize-face`:
+Both default to `:inherit` from stock faces, so the list follows whatever theme you load without the mode restyling any face a theme or another package owns. To override, set them the way you set any other face — `custom-set-faces`, or `:custom-face` in a `use-package` block, or `M-x customize-face`:
 
 ```elisp
 (custom-set-faces
@@ -69,6 +69,15 @@ Both defaults are compositions of stock faces, so the list follows whatever them
 
 The spacing around a name is the tab bar's, not this package's: `tab-bar-separator` sets what goes between the items, and on a GUI frame a `:box` on either face pads and outlines them.
 
+With `tab-bar-auto-width` on, as it is by default, the tab bar shrinks its tabs to share the width of the frame, but not the workspaces: each keeps the width of its name. Emacs shrinks an item whose face is in `tab-bar-auto-width-faces` (a face it inherits from does not count), and Emacs 31, while that list is left alone, one whose key is a tab's instead. To have the workspaces shrink too:
+
+```elisp
+(with-eval-after-load 'tab-bar
+  (setq tab-bar-auto-width-faces
+        (append '(persp-mode-tab-bar-current persp-mode-tab-bar-inactive)
+                tab-bar-auto-width-faces)))
+```
+
 | Variable                               | Default | Does                                                                         |
 | -------------------------------------- | ------- | ---------------------------------------------------------------------------- |
 | `persp-mode-tab-bar-silence-doom-echo` | `t`     | drops Doom's echoed workspace list, which the bar is now showing permanently |
@@ -78,6 +87,10 @@ There is no option to pick the workspace API: the mode uses Doom's `+workspace` 
 ## Compatibility
 
 The mode contributes one `tab-bar-format` item rather than taking the bar. It splices the workspace list in where the real tabs were and leaves every other item where it found it, so history buttons, `tab-bar-format-global` and packages like [tab-bar-echo-area](https://github.com/fritzgrabo/tab-bar-echo-area) or [tab-bar-notch](https://github.com/jdtsmith/tab-bar-notch) go on working; turning the mode off puts the format back, and `tab-bar-show` with it, keeping whatever other packages added or removed while it was on. Its own two faces leave themes and [vim-tab-bar](https://github.com/jamescherti/vim-tab-bar.el) alone, and its `workspace-N` item keys collide with none of Emacs's. Real tab-bar tabs, Doom's per-workspace tab sets included, keep working — they are simply not drawn.
+
+The mode turns `tab-bar-mode` on if it is off, and a number in `tab-bar-show`, which hides the bar until there are more real tabs than that, becomes `t` while the mode is on. `nil` is left alone: it means keep the bar hidden, so the workspace list is hidden with it. `M-x toggle-frame-tab-bar` shows it on one frame, or customize `tab-bar-show` to `t` (with `setopt` or Customize, since a plain `setq` does not redraw the bar).
+
+`tab-bar-mode` also brings its own ways to move between real tabs, and since those tabs are not drawn, they change what you see with nothing on the bar to say why. `C-TAB` and `C-S-TAB` go to the next and previous tab, unless something else has those keys, and the mouse wheel over the tab bar does the same. Switch workspaces with persp-mode's commands, or Doom's `+workspace` ones, instead. Emacs takes the keys only when they are free, so binding them first keeps them yours, and on Emacs 31 setting `tab-bar-define-keys` to `nil` before `tab-bar-mode` comes on leaves them unbound.
 
 One thing it can't fix: right-clicking a workspace brings up the tab bar's own context menu, with "New tab" and "Reopen closed tab" in it, and both make a real tab you then can't see. That menu is bound once for the whole bar in `tab-bar-map` and decides what to offer from the item's key, so there is no way to give these items a menu of their own.
 

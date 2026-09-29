@@ -478,6 +478,20 @@
                                          '+workspace/display))))
       (persp-mode-tab-bar--silence-doom nil))))
 
+(ert-deftest persp-mode-tab-bar-customizing-the-doom-echo-takes-effect-while-on ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (let ((persp-mode-tab-bar-silence-doom-echo t))
+      (unwind-protect
+          (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))
+            (persp-mode-tab-bar-mode 1)
+            (customize-set-variable 'persp-mode-tab-bar-silence-doom-echo nil)
+            (should-not (advice-member-p #'persp-mode-tab-bar--display
+                                         '+workspace/display))
+            (customize-set-variable 'persp-mode-tab-bar-silence-doom-echo t)
+            (should (advice-member-p #'persp-mode-tab-bar--display
+                                     '+workspace/display)))
+        (persp-mode-tab-bar--silence-doom nil)))))
+
 (ert-deftest persp-mode-tab-bar-advises-nothing-outside-doom ()
   (persp-mode-tab-bar-test--with-tab-bar
     (unwind-protect

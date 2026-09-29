@@ -74,8 +74,14 @@ stays exactly where it is.")
   "Whether to stop Doom Emacs echoing the workspace list.
 Doom prefixes its workspace messages with the very list the tab bar is
 already showing, and `+workspace/display' says nothing else at all.  Off
-by setting this to nil; it has no effect outside Doom."
-  :type 'boolean)
+by setting this to nil; it has no effect outside Doom.  Set it with
+`setopt' or Customize to change it while the mode is on."
+  :type 'boolean
+  :set (lambda (symbol value)
+         (set-default symbol value)
+         (when (and (bound-and-true-p persp-mode-tab-bar-mode)
+                    (persp-mode-tab-bar--doom-p))
+           (persp-mode-tab-bar--silence-doom value))))
 
 (defface persp-mode-tab-bar-current '((t :inherit (bold highlight)))
   "Face for the current workspace.

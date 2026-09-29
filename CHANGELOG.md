@@ -6,6 +6,32 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-09-29
+
+### Fixed
+- **With a number in `tab-bar-show` and `tab-bar-mode` already on, the bar stayed
+  hidden.** One tab is not more than 1, so the bar was hidden, and setting
+  `tab-bar-show` to `t`, which is all the mode did, does not redraw it. The mode now
+  recomputes the bar's lines when it changes `tab-bar-show`, on the way in and on
+  the way out, without calling `tab-bar-mode` and so without rerunning Doom's
+  tab-bar hook.
+- **Doom's workspace messages kept the list under Doom's usual start-up.** Doom
+  defines `+workspace--message-body` only when its first workspace command loads the
+  file, and the mode only advised functions already defined. Both are now advised
+  whenever Doom is detected, since advice on an undefined function waits for it, and
+  `+workspace/display` by a function of the mode's own rather than `ignore`.
+- **A replaced item added back while the mode was on came back twice.** A package
+  adding the "+" button while the mode was on left two of them in the format the mode
+  handed back.
+- **The face docstring said the default was not `:inherit`.** It is: the faces
+  inherit from `bold` and `highlight`, and from `shadow` and `tab-bar-tab-inactive`.
+- **The README said `SPC TAB .` shows Doom's workspace list.** It is
+  `+workspace/display`, on `SPC TAB TAB`.
+- **The `tab-bar-auto-width` note was missing from the README**, though 0.2.1 said it
+  had moved there, and was wrong for Emacs 31, which picks tabs to shrink by key while
+  `tab-bar-auto-width-faces` is left at its default. It is in the README now, right
+  for 29 to 31, and a test holds the package to it.
+
 ### Removed
 - **`persp-mode-tab-bar-backend`.** The mode uses Doom's `+workspace` commands when
   they are defined and plain persp-mode otherwise, and there is no longer an option
@@ -13,6 +39,21 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
   commands in use.
 - **`persp-mode-tab-bar-replace` as an option.** It is a constant now, naming the
   `tab-bar-format` items that draw real tabs and the "+" button.
+- **The autoload cookie on `persp-mode-tab-bar-format`**, which nothing calls before
+  the mode has loaded the package.
+
+### Added
+- **README notes on `tab-bar-show` nil**, which keeps the bar and so the list hidden,
+  and on `C-TAB` and the mouse wheel over the bar, which still move between the real
+  tabs the bar does not draw.
+- **`make check`**: the tests byte-compiled like the package, relint, a check that the
+  files are indented as `emacs -Q` indents them (`make format` fixes it), and a test
+  of every option against its `:type`. CI runs it on Emacs 29.1, 30.1, 31.1 and
+  snapshot, and against persp-mode 3.0.8. `CONTRIBUTING.md`, `.dir-locals.el` and
+  `.editorconfig`.
+- **Tests for what a mutation pass found untested**: turning the tab bar on and back
+  off, leaving Doom alone when told to or outside Doom, destructive edits to the
+  format, redrawing, the fill item and the click help.
 
 ## [0.2.1] — 2026-09-28
 
@@ -119,7 +160,8 @@ in daily use.
 - **Faces `persp-mode-tab-bar-current` and `persp-mode-tab-bar-inactive`**, composed
   from stock faces so the tab bar's own faces are never restyled.
 
-[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.1.1

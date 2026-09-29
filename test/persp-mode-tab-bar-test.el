@@ -9,6 +9,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'cus-edit)
 (require 'ert)
 (require 'persp-mode-tab-bar)
 
@@ -68,10 +69,14 @@
 (ert-deftest persp-mode-tab-bar-splice-drops-the-new-tab-button-from-the-emacs-default ()
   ;; The "+" makes a real tab, which the bar would then not draw.
   (should (equal (persp-mode-tab-bar--splice
-                  '(tab-bar-format-history tab-bar-format-tabs
-                    tab-bar-separator tab-bar-format-add-tab))
-                 '(tab-bar-format-history persp-mode-tab-bar-format
-                   tab-bar-separator persp-mode-tab-bar-format-fill))))
+                  '(tab-bar-format-history
+                    tab-bar-format-tabs
+                    tab-bar-separator
+                    tab-bar-format-add-tab))
+                 '(tab-bar-format-history
+                   persp-mode-tab-bar-format
+                   tab-bar-separator
+                   persp-mode-tab-bar-format-fill))))
 
 (ert-deftest persp-mode-tab-bar-splice-fills-when-nothing-aligns-right ()
   (should (equal (persp-mode-tab-bar--splice '(tab-bar-format-tabs))
@@ -169,8 +174,10 @@
     (add-to-list 'tab-bar-format 'foreign-item t)
     (persp-mode-tab-bar-mode -1)
     (should (equal tab-bar-format
-                   '(tab-bar-format-history tab-bar-format-tabs
-                     foreign-item tab-bar-format-align-right
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
+                     foreign-item
+                     tab-bar-format-align-right
                      tab-bar-format-global)))))
 
 (ert-deftest persp-mode-tab-bar-disabling-appends-an-added-item-without-align-right ()
@@ -190,7 +197,8 @@
     (setq tab-bar-format (remq 'tab-bar-format-global tab-bar-format))
     (persp-mode-tab-bar-mode -1)
     (should (equal tab-bar-format
-                   '(tab-bar-format-history tab-bar-format-tabs
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
                      tab-bar-format-align-right)))))
 
 ;;; Unloading
@@ -218,6 +226,24 @@
       (setq tab-bar-format format
             tab-bar-show show)
       (require 'persp-mode-tab-bar))))
+
+;;; Options
+
+(ert-deftest persp-mode-tab-bar-options-match-their-types ()
+  ;; Customize will not edit a value its `:type' does not match.
+  (let ((options nil)
+        (mismatched nil))
+    (mapatoms (lambda (symbol)
+                (when (and (custom-variable-p symbol)
+                           (string-prefix-p "persp-mode-tab-bar-"
+                                            (symbol-name symbol)))
+                  (push symbol options))))
+    (should options)
+    (dolist (option options)
+      (unless (widget-apply (widget-convert (get option 'custom-type))
+                            :match (default-value option))
+        (push option mismatched)))
+    (should-not mismatched)))
 
 ;;; Backend selection
 

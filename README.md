@@ -96,15 +96,18 @@ If you're not on persp-mode already, one of these probably suits you better.
 It is a small package and a personal one. Bug reports and pull requests are welcome.
 
 ```sh
-make deps                # persp-mode and package-lint, into ./.deps
-make compile lint test   # byte-compile clean, checkdoc, package-lint, ERT
+make deps    # persp-mode, package-lint and relint, into ./.deps
+make check   # byte-compile clean, checkdoc, package-lint, relint, format check, ERT
+make format  # indent as plain emacs -Q does
 ```
 
-CI runs the same on Emacs 29, 30 and snapshot, runs the tests against persp-mode 3.0.8, the oldest it supports, and runs [melpazoid](https://github.com/riscy/melpazoid). To test against a persp-mode checkout of your own:
+CI runs the same on Emacs 29, 30, 31 and snapshot, runs it against persp-mode 3.0.8, the oldest it supports, and runs [melpazoid](https://github.com/riscy/melpazoid). To test against a persp-mode checkout of your own:
 
 ```sh
-make compile test PERSP_MODE_DIR=../persp-mode.el
+make check PERSP_MODE_DIR=../persp-mode.el
 ```
+
+[CONTRIBUTING.md](CONTRIBUTING.md) has the rest.
 
 ## License
 

@@ -219,10 +219,10 @@ an item others removed stays out.  FORMAT comes back untouched, the very
 list, when nobody changed anything."
   (let* ((ours '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill))
          (added (seq-remove (lambda (item) (or (member item spliced)
-                                                (member item ours)))
+                                               (member item ours)))
                             current))
          (removed (seq-remove (lambda (item) (or (member item current)
-                                                  (member item ours)))
+                                                 (member item ours)))
                               spliced)))
     (if (not (or added removed))
         format

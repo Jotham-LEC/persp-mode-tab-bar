@@ -70,6 +70,18 @@
                            '(" 1 main " " 2 docs ")))))))
 
 
+(ert-deftest persp-mode-tab-bar-format-says-where-a-click-goes ()
+  (persp-mode-tab-bar-test--with-workspaces '("main" "docs") "main"
+    (should (equal (plist-get (nthcdr 4 (nth 1 (persp-mode-tab-bar-format))) :help)
+                   "Switch to workspace docs"))))
+
+(ert-deftest persp-mode-tab-bar-format-fill-is-a-space-in-the-bar-s-own-face ()
+  ;; Anything else and the last workspace's face runs on to the frame edge.
+  (let ((items (persp-mode-tab-bar-format-fill)))
+    (should (= (length items) 1))
+    (should (equal-including-properties (nth 2 (car items))
+                                        (propertize " " 'face 'tab-bar)))))
+
 ;;; Splicing into `tab-bar-format'
 
 (ert-deftest persp-mode-tab-bar-splice-takes-the-place-of-the-real-tabs ()
@@ -188,6 +200,18 @@
     ;; Doom hangs its per-workspace tab handling off this hook.
     (should (= runs 0))))
 
+(ert-deftest persp-mode-tab-bar-turns-the-tab-bar-off-only-if-it-turned-it-on ()
+  (persp-mode-tab-bar-test--with-real-tab-bar runs
+    (tab-bar-mode -1)
+    (persp-mode-tab-bar-mode 1)
+    (should tab-bar-mode)
+    (persp-mode-tab-bar-mode -1)
+    (should-not tab-bar-mode)
+    (tab-bar-mode 1)
+    (persp-mode-tab-bar-mode 1)
+    (persp-mode-tab-bar-mode -1)
+    (should tab-bar-mode)))
+
 (ert-deftest persp-mode-tab-bar-enabling-adds-the-redraw-hooks ()
   (persp-mode-tab-bar-test--with-tab-bar
     (persp-mode-tab-bar-mode 1)
@@ -268,6 +292,31 @@
                      tab-bar-format-tabs
                      tab-bar-separator
                      tab-bar-format-add-tab)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-appended-in-place ()
+  ;; `nconc' and the like change the list the mode left rather than making a
+  ;; new one, so the mode's record of that list must be a copy.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode 1)
+    (nconc tab-bar-format (list 'foreign-item))
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
+                     foreign-item)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-after-others-drop-the-workspace-list ()
+  ;; The mode's own items are no concern of the format it hands back, whether
+  ;; others kept them or not.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode 1)
+    (setq tab-bar-format (remq 'persp-mode-tab-bar-format tab-bar-format))
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs)))))
 
 ;;; Unloading
 
@@ -359,6 +408,29 @@
                                        '+workspace/display)))
       (persp-mode-tab-bar--silence-doom nil))))
 
+(ert-deftest persp-mode-tab-bar-leaves-doom-s-echo-alone-when-told-to ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (unwind-protect
+        (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))
+          (let ((persp-mode-tab-bar-silence-doom-echo nil))
+            (persp-mode-tab-bar-mode 1)
+            (should-not (advice-member-p #'persp-mode-tab-bar--message-body
+                                         '+workspace--message-body))
+            (should-not (advice-member-p #'persp-mode-tab-bar--display
+                                         '+workspace/display))))
+      (persp-mode-tab-bar--silence-doom nil))))
+
+(ert-deftest persp-mode-tab-bar-advises-nothing-outside-doom ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (unwind-protect
+        (progn
+          (persp-mode-tab-bar-mode 1)
+          (should-not (advice-member-p #'persp-mode-tab-bar--message-body
+                                       '+workspace--message-body))
+          (should-not (advice-member-p #'persp-mode-tab-bar--display
+                                       '+workspace/display)))
+      (persp-mode-tab-bar--silence-doom nil))))
+
 
 ;;; Against a real persp-mode
 
@@ -430,6 +502,37 @@
       (should item)
       (funcall (nth 3 item))
       (should (equal (persp-mode-tab-bar--current-name) "docs")))))
+
+(ert-deftest persp-mode-tab-bar-redraws-after-every-workspace-change ()
+  (persp-mode-tab-bar-test--with-persp-mode
+    (persp-mode-tab-bar-test--with-tab-bar
+      (let* ((redraws 0)
+             (count (lambda (&optional all)
+                      (when all (setq redraws (1+ redraws))))))
+        (persp-mode-tab-bar-mode 1)
+        (advice-add 'force-mode-line-update :before count)
+        (unwind-protect
+            (dolist (change (list (lambda () (persp-add-new "work"))
+                                  (lambda () (persp-frame-switch "work"))
+                                  (lambda () (persp-rename "job"))
+                                  (lambda () (persp-kill "job"))))
+              (setq redraws 0)
+              (funcall change)
+              (should (> redraws 0)))
+          (advice-remove 'force-mode-line-update count)
+          (persp-mode-tab-bar-mode -1))))))
+
+(ert-deftest persp-mode-tab-bar-disabling-redraws ()
+  (persp-mode-tab-bar-test--with-tab-bar
+    (let* ((redraws 0)
+           (count (lambda (&optional all)
+                    (when all (setq redraws (1+ redraws))))))
+      (persp-mode-tab-bar-mode 1)
+      (advice-add 'force-mode-line-update :before count)
+      (unwind-protect
+          (persp-mode-tab-bar-mode -1)
+        (advice-remove 'force-mode-line-update count))
+      (should (> redraws 0)))))
 
 (provide 'persp-mode-tab-bar-test)
 ;;; persp-mode-tab-bar-test.el ends here

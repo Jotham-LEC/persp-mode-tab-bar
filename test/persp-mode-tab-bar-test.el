@@ -281,7 +281,7 @@
         (push option mismatched)))
     (should-not mismatched)))
 
-;;; Backend selection
+;;; persp-mode's hooks
 
 (ert-deftest persp-mode-tab-bar-redraws-on-hooks-persp-mode-defines ()
   ;; `add-hook' on a hook nobody defines makes the variable and never runs it,
@@ -290,16 +290,18 @@
   (dolist (hook persp-mode-tab-bar--redraw-hooks)
     (should (get hook 'standard-value))))
 
-(ert-deftest persp-mode-tab-bar-backend-detects-doom ()
-  (let ((persp-mode-tab-bar-backend 'auto))
-    (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))
-      (should (eq (persp-mode-tab-bar--backend) 'doom)))
-    (should (eq (persp-mode-tab-bar--backend) 'persp-mode))))
+;;; Doom
 
-(ert-deftest persp-mode-tab-bar-backend-can-be-pinned ()
+(ert-deftest persp-mode-tab-bar-detects-doom ()
   (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("main"))))
-    (let ((persp-mode-tab-bar-backend 'persp-mode))
-      (should (eq (persp-mode-tab-bar--backend) 'persp-mode)))))
+    (should (persp-mode-tab-bar--doom-p)))
+  (should-not (persp-mode-tab-bar--doom-p)))
+
+(ert-deftest persp-mode-tab-bar-has-no-backend-option ()
+  ;; Pinning a backend could only make the bar disagree with the workspace
+  ;; commands actually in use, so detection is all there is.
+  (should-not (boundp 'persp-mode-tab-bar-backend))
+  (should-not (custom-variable-p 'persp-mode-tab-bar-replace)))
 
 (ert-deftest persp-mode-tab-bar-message-body-drops-the-workspace-list ()
   (let ((formatted (persp-mode-tab-bar--message-body "Renamed '#1'->'docs'" 'success)))
@@ -333,8 +335,7 @@
   (declare (indent 0))
   `(let ((persp-auto-resume-time -1)
          (persp-auto-save-opt 0)
-         (persp-save-dir (make-temp-file "persp-mode-tab-bar-test" t))
-         (persp-mode-tab-bar-backend 'persp-mode))
+         (persp-save-dir (make-temp-file "persp-mode-tab-bar-test" t)))
      (unwind-protect
          (progn (persp-mode 1) ,@body)
        (persp-mode -1)
@@ -367,8 +368,7 @@
 
 (ert-deftest persp-mode-tab-bar-switching-to-a-vanished-doom-workspace-is-quiet ()
   ;; Doom's own `+workspace-switch' signals on a name it does not have.
-  (let ((persp-mode-tab-bar-backend 'doom)
-        (called nil))
+  (let ((called nil))
     (cl-letf (((symbol-function '+workspace-list-names) (lambda () '("#1")))
               ((symbol-function '+workspace-switch)
                (lambda (name)

@@ -69,11 +69,11 @@ Both defaults are compositions of stock faces, so the list follows whatever them
 
 The spacing around a name is the tab bar's, not this package's: `tab-bar-separator` sets what goes between the items, and on a GUI frame a `:box` on either face pads and outlines them.
 
-| Variable                               | Default                   | Does                                                                         |
-| -------------------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
-| `persp-mode-tab-bar-backend`           | `auto`                    | pins the workspace API — `doom` or `persp-mode` — instead of detecting it    |
-| `persp-mode-tab-bar-replace`           | the tab items and the `+` | which `tab-bar-format` items the workspace list stands in for                |
-| `persp-mode-tab-bar-silence-doom-echo` | `t`                       | drops Doom's echoed workspace list, which the bar is now showing permanently |
+| Variable                               | Default | Does                                                                         |
+| -------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `persp-mode-tab-bar-silence-doom-echo` | `t`     | drops Doom's echoed workspace list, which the bar is now showing permanently |
+
+There is no option to pick the workspace API: the mode uses Doom's `+workspace` commands when they are defined and plain persp-mode otherwise. Nor is there one for which `tab-bar-format` items the list stands in for; `persp-mode-tab-bar-replace` is a constant naming the items that draw real tabs and the `+` button.
 
 ## Compatibility
 

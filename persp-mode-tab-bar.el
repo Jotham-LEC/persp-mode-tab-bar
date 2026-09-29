@@ -60,17 +60,7 @@
   :group 'tab-bar
   :link '(url-link :tag "Homepage" "https://github.com/Jotham-LEC/persp-mode-tab-bar"))
 
-(defcustom persp-mode-tab-bar-backend 'auto
-  "Which workspace API to read the workspaces from.
-`auto' uses Doom Emacs's `+workspace' commands where they exist and
-plain `persp-mode' everywhere else.  `doom' and `persp-mode' pin the
-choice, which is worth doing if you have Doom's module loaded but do not
-want its notion of the workspace list."
-  :type '(choice (const :tag "Detect Doom Emacs" auto)
-                 (const :tag "Doom Emacs workspaces" doom)
-                 (const :tag "Plain persp-mode" persp-mode)))
-
-(defcustom persp-mode-tab-bar-replace
+(defconst persp-mode-tab-bar-replace
   '(tab-bar-format-tabs tab-bar-format-tabs-groups tab-bar-format-add-tab)
   "The `tab-bar-format' items this mode takes the place of.
 These are the items that draw the real tab-bar tabs; left in, they would
@@ -78,8 +68,7 @@ put a second row of tabs beside the workspace list.  The \"+\" button of
 `tab-bar-format-add-tab' is here too, since the tab it makes would not be
 drawn.  Everything else in `tab-bar-format' -- history buttons,
 separators, the global string, whatever other packages have added --
-stays exactly where it is."
-  :type '(repeat function))
+stays exactly where it is.")
 
 (defcustom persp-mode-tab-bar-silence-doom-echo t
   "Whether to stop Doom Emacs echoing the workspace list.
@@ -110,15 +99,13 @@ disabling can tell what other packages changed in the meantime.  Nil
 while the mode is off, so that disabling it twice cannot restore a
 `tab-bar-format' the mode has already handed back.")
 
-(defun persp-mode-tab-bar--backend ()
-  "Return the workspace API in effect, `doom' or `persp-mode'."
-  (pcase persp-mode-tab-bar-backend
-    ('auto (if (fboundp '+workspace-list-names) 'doom 'persp-mode))
-    (backend backend)))
+(defun persp-mode-tab-bar--doom-p ()
+  "Return non-nil if Doom Emacs's `+workspace' commands are there to use."
+  (fboundp '+workspace-list-names))
 
 (defun persp-mode-tab-bar--names ()
   "Return the workspace names, in `persp-mode' order."
-  (if (eq (persp-mode-tab-bar--backend) 'doom)
+  (if (persp-mode-tab-bar--doom-p)
       (+workspace-list-names)
     ;; Including the nil perspective, which is where plain persp-mode starts
     ;; you and where killing your last workspace puts you back.  Drop it and
@@ -151,7 +138,7 @@ while the mode is off, so that disabling it twice cannot restore a
   ;; guard is no guard and the workspace gets created.  Clicking a workspace
   ;; that has been killed should simply do nothing.
   (when (member name (persp-mode-tab-bar--names))
-    (if (eq (persp-mode-tab-bar--backend) 'doom)
+    (if (persp-mode-tab-bar--doom-p)
         (+workspace-switch name)
       (persp-frame-switch name))))
 
@@ -287,7 +274,7 @@ All it does is echo the workspace list, which the tab bar is showing.")
   (dolist (hook persp-mode-tab-bar--redraw-hooks)
     (add-hook hook #'persp-mode-tab-bar--redraw))
   (when (and persp-mode-tab-bar-silence-doom-echo
-             (eq (persp-mode-tab-bar--backend) 'doom))
+             (persp-mode-tab-bar--doom-p))
     (persp-mode-tab-bar--silence-doom t))
   (unless (bound-and-true-p tab-bar-mode)
     (tab-bar-mode 1)))

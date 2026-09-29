@@ -6,6 +6,14 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+### Removed
+- **`persp-mode-tab-bar-backend`.** The mode uses Doom's `+workspace` commands when
+  they are defined and plain persp-mode otherwise, and there is no longer an option
+  to pin either; pinning one could only make the bar disagree with the workspace
+  commands in use.
+- **`persp-mode-tab-bar-replace` as an option.** It is a constant now, naming the
+  `tab-bar-format` items that draw real tabs and the "+" button.
+
 ## [0.2.1] — 2026-09-28
 
 ### Fixed

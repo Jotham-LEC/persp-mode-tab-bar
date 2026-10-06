@@ -6,6 +6,22 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+### Fixed
+- **Turning the mode off moved items other packages added while it was on.** Every
+  added item went in before `tab-bar-format-align-right`, or last, so the menu-bar
+  button `add-to-list` puts first ended up at the far right, and a global string
+  appended after `tab-bar-format-align-right` lost its place on the right. An added
+  item now goes back after the item it followed, or first if it was first.
+- **A `tab-bar-format` set with `setopt` or Customize while the mode was on was
+  rewritten on the way out**, back into the shape of the format the mode found, with
+  a "+" button you had not asked for. A format with real tabs in it and none of the
+  mode's items is now handed back as it is.
+- **A `tab-bar-format` saved with Customize while the mode was on never drew real
+  tabs again.** It names the mode's own items, which turning the mode off left in
+  place, so the bar went on listing workspaces with the mode off, and drew nothing at
+  all before the package loaded. Turning the mode off now puts the real tabs in their
+  place, and the two format functions are autoloaded.
+
 ## [0.2.2] — 2026-09-29
 
 ### Fixed

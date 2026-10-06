@@ -149,6 +149,7 @@ while the mode is off, so that disabling it twice cannot restore a
         (+workspace-switch name)
       (persp-frame-switch name))))
 
+;;;###autoload
 (defun persp-mode-tab-bar-format ()
   "Return one tab-bar item per workspace; click one to switch to it.
 While `persp-mode' is off there are no workspaces to show, so return the
@@ -178,6 +179,7 @@ real tabs instead, as `tab-bar-format-tabs' draws them."
            :help ,(format "Switch to workspace %s" name)))
        (persp-mode-tab-bar--names)))))
 
+;;;###autoload
 (defun persp-mode-tab-bar-format-fill ()
   "Return an item that stops the last one's face running to the frame edge."
   ;; On GUI frames the final item's face paints the rest of the line, so a
@@ -210,23 +212,84 @@ mode was on does, keeps it where it is, and only the one."
         spliced
       (append spliced (list #'persp-mode-tab-bar-format-fill)))))
 
+(defun persp-mode-tab-bar--own-item-p (item)
+  "Return non-nil if ITEM is one of the items the mode puts in the format."
+  (memq item '(persp-mode-tab-bar-format persp-mode-tab-bar-format-fill)))
+
 (defun persp-mode-tab-bar--reconcile (format spliced current)
   "Return FORMAT, updated for what others did to SPLICED to make CURRENT.
 FORMAT is `tab-bar-format' from before the mode spliced it, SPLICED what
 the splice made of it and CURRENT what it is now.  An item others added
-goes in before `tab-bar-format-align-right', or last if there is none,
-unless FORMAT has it already, as it has the items the splice replaced;
-an item others removed stays out.  FORMAT comes back untouched, the very
-list, when nobody changed anything."
+goes in after the item it follows in CURRENT, or first if it is first
+there, unless FORMAT has it already, as it has the items the splice
+replaced; an item others removed stays out.  A CURRENT with real tabs
+in it and none of the mode's items was set afresh, as `setopt' and
+Customize do, and comes back as it is.  FORMAT comes back untouched, the
+very list, when nobody changed anything."
   (let ((added (seq-remove (lambda (item) (or (member item spliced)
                                               (member item format)))
                            current))
         (removed (seq-remove (lambda (item) (member item current)) spliced)))
-    (if (not (or added removed))
-        format
-      (let* ((kept (seq-remove (lambda (item) (member item removed)) format))
-             (tail (member 'tab-bar-format-align-right kept)))
-        (append (butlast kept (length tail)) added tail)))))
+    (cond
+     ((and (seq-some (lambda (item) (memq item persp-mode-tab-bar-replace))
+                     current)
+           (not (seq-some #'persp-mode-tab-bar--own-item-p current)))
+      current)
+     ((not (or added removed))
+      format)
+     (t
+      (let ((result (seq-remove (lambda (item) (member item removed)) format)))
+        (dolist (item added result)
+          (let ((after (persp-mode-tab-bar--follows item current format result)))
+            (setq result (if (not after)
+                             (cons item result)
+                           (let ((tail (member after result)))
+                             (append (butlast result (1- (length tail)))
+                                     (list item)
+                                     (cdr tail))))))))))))
+
+(defun persp-mode-tab-bar--follows (item current format result)
+  "Return the item of RESULT that ITEM is to follow, or nil to go first.
+That is the nearest item before ITEM in CURRENT that RESULT has.  The
+workspace list stands for the first of the items FORMAT had that the
+splice replaced, since it took their place, or for the start of the
+format if FORMAT had none of them."
+  (let ((before (cdr (member item (reverse current))))
+        (found nil))
+    (while (and before (not found))
+      (let ((candidate (pop before)))
+        (cond ((eq candidate 'persp-mode-tab-bar-format)
+               (setq found (or (seq-find (lambda (item)
+                                           (and (memq item persp-mode-tab-bar-replace)
+                                                (member item result)))
+                                         format)
+                               ;; The splice put the list first.
+                               'first)))
+              ((and (not (persp-mode-tab-bar--own-item-p candidate))
+                    (member candidate result))
+               (setq found candidate)))))
+    (unless (eq found 'first)
+      found)))
+
+(defun persp-mode-tab-bar--unsplice (format)
+  "Return FORMAT with the real tabs in place of the mode's own items.
+A format saved with Customize while the mode was on names them, and
+handed back with them it would go on listing workspaces with the mode
+off.  FORMAT comes back untouched, the very list, when it names neither."
+  (if (not (seq-some #'persp-mode-tab-bar--own-item-p format))
+      format
+    (let ((tabs (seq-some (lambda (item)
+                            (memq item '(tab-bar-format-tabs
+                                         tab-bar-format-tabs-groups)))
+                          format)))
+      (mapcan (lambda (item)
+                (cond ((eq item 'persp-mode-tab-bar-format)
+                       (unless tabs
+                         (setq tabs t)
+                         (list 'tab-bar-format-tabs)))
+                      ((eq item 'persp-mode-tab-bar-format-fill) nil)
+                      (t (list item))))
+              format))))
 
 (defun persp-mode-tab-bar--redraw (&rest _)
   "Redraw the tab bar on every frame."
@@ -299,8 +362,9 @@ What other packages added to it or took out of it meanwhile stays done."
   (when persp-mode-tab-bar--saved-state
     (pcase-let ((`(,format ,show ,tab-bar-was-off ,spliced)
                  persp-mode-tab-bar--saved-state))
-      (setq tab-bar-format (persp-mode-tab-bar--reconcile
-                            format spliced tab-bar-format))
+      (setq tab-bar-format (persp-mode-tab-bar--unsplice
+                            (persp-mode-tab-bar--reconcile
+                             format spliced tab-bar-format)))
       ;; Only a number the mode turned into t goes back, and only while it is
       ;; still t: any other value is a choice somebody made since.
       (when (and (natnump show) (eq tab-bar-show t))

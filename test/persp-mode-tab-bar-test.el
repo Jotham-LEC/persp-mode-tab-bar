@@ -285,9 +285,36 @@
       (persp-mode-tab-bar-mode -1)
       (setq tab-bar-format saved)
       (persp-mode-tab-bar-mode 1)
-      (should (equal tab-bar-format saved))
-      (persp-mode-tab-bar-mode -1)
       (should (equal tab-bar-format saved)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-over-a-saved-format-draws-the-real-tabs ()
+  ;; A format saved with Customize while the mode was on names the mode's own
+  ;; items, and handed back as it is it would go on listing workspaces.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history
+                               'persp-mode-tab-bar-format
+                               'persp-mode-tab-bar-format-fill))
+    (persp-mode-tab-bar-mode 1)
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs)))))
+
+(ert-deftest persp-mode-tab-bar-format-functions-are-autoloaded ()
+  ;; So that a format saved with them draws something before the package loads.
+  (let ((dir (make-temp-file "persp-mode-tab-bar-" t)))
+    (unwind-protect
+        (let ((loaddefs (expand-file-name "loaddefs.el" dir))
+              (inhibit-message t))
+          (copy-file (locate-library "persp-mode-tab-bar.el") (file-name-as-directory dir))
+          (loaddefs-generate dir loaddefs)
+          (with-temp-buffer
+            (insert-file-contents loaddefs)
+            (dolist (function '(persp-mode-tab-bar-format
+                                persp-mode-tab-bar-format-fill))
+              (goto-char (point-min))
+              (should (search-forward (format "(autoload '%s " function) nil t)))))
+      (delete-directory dir t))))
 
 (ert-deftest persp-mode-tab-bar-disabling-twice-restores-once ()
   (persp-mode-tab-bar-test--with-tab-bar
@@ -311,18 +338,66 @@
     (should (equal tab-bar-format
                    '(tab-bar-format-history
                      tab-bar-format-tabs
-                     foreign-item
+                     tab-bar-format-align-right
+                     tab-bar-format-global
+                     foreign-item)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-after-align-right-there ()
+  ;; As `display-time-mode' and the like put the global string, to the right.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-format-align-right))
+    (persp-mode-tab-bar-mode 1)
+    (add-to-list 'tab-bar-format 'tab-bar-format-global t)
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
                      tab-bar-format-align-right
                      tab-bar-format-global)))))
 
-(ert-deftest persp-mode-tab-bar-disabling-appends-an-added-item-without-align-right ()
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-after-the-workspaces-there ()
+  ;; The workspace list stands where the real tabs were, so what follows it
+  ;; follows the tabs.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-format-align-right))
+    (persp-mode-tab-bar-mode 1)
+    (setq tab-bar-format (let ((tail (memq 'persp-mode-tab-bar-format tab-bar-format)))
+                           (append (butlast tab-bar-format (1- (length tail)))
+                                   (list 'foreign-item)
+                                   (cdr tail))))
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-history
+                     tab-bar-format-tabs
+                     foreign-item
+                     tab-bar-format-align-right)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-hands-back-a-format-set-afresh ()
+  ;; `setopt' or Customize while the mode is on replaces the whole format, and
+  ;; that is what the user wants once the mode is off.
+  (persp-mode-tab-bar-test--with-tab-bar
+    (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs
+                               'tab-bar-separator 'tab-bar-format-add-tab))
+    (persp-mode-tab-bar-mode 1)
+    (setopt tab-bar-format '(tab-bar-format-global tab-bar-format-tabs))
+    (persp-mode-tab-bar-mode -1)
+    (should (equal tab-bar-format
+                   '(tab-bar-format-global
+                     tab-bar-format-tabs)))))
+
+(ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-pushed-first ()
+  ;; As `add-to-list' puts the menu-bar button, which belongs at the left.
   (persp-mode-tab-bar-test--with-tab-bar
     (setq tab-bar-format (list 'tab-bar-format-history 'tab-bar-format-tabs))
     (persp-mode-tab-bar-mode 1)
     (push 'foreign-item tab-bar-format)
     (persp-mode-tab-bar-mode -1)
     (should (equal tab-bar-format
-                   '(tab-bar-format-history tab-bar-format-tabs foreign-item)))))
+                   '(foreign-item
+                     tab-bar-format-history
+                     tab-bar-format-tabs)))))
 
 (ert-deftest persp-mode-tab-bar-disabling-keeps-an-item-removed-while-on-removed ()
   (persp-mode-tab-bar-test--with-tab-bar

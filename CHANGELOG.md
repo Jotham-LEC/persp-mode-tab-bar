@@ -6,6 +6,8 @@ All notable changes to persp-mode-tab-bar are documented here. The format is bas
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-10-07
+
 ### Fixed
 - **Turning the mode off moved items other packages added while it was on.** Every
   added item went in before `tab-bar-format-align-right`, or last, so the menu-bar
@@ -191,7 +193,8 @@ in daily use.
 - **Faces `persp-mode-tab-bar-current` and `persp-mode-tab-bar-inactive`**, composed
   from stock faces so the tab bar's own faces are never restyled.
 
-[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/Jotham-LEC/persp-mode-tab-bar/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.3
 [0.2.2]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Jotham-LEC/persp-mode-tab-bar/releases/tag/v0.2.0

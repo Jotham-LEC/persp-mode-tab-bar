@@ -6,7 +6,7 @@
 ;; Assisted-by: Claude:claude-opus-5
 ;; Assisted-by: Claude:claude-opus-5-5
 ;; URL: https://github.com/Jotham-LEC/persp-mode-tab-bar
-;; Version: 0.2.2
+;; Version: 0.2.3
 ;; Package-Requires: ((emacs "29.1") (persp-mode "3.0.8"))
 ;; Keywords: convenience, frames
 
